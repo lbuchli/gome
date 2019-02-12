@@ -67,6 +67,12 @@ func (win *Window) handleEvents() {
 		switch event.(type) {
 		case *sdl.QuitEvent:
 			return
+		case *sdl.KeyboardEvent:
+			kEvent := event.(*sdl.KeyboardEvent)
+			MailBox.Send(KeyboardMessage{
+				Key:       kEvent.Keysym,
+				Timestamp: kEvent.GetTimestamp(),
+			})
 		}
 	}
 }

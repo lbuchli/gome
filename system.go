@@ -70,13 +70,13 @@ func (ms *MultiSystem) Init(scene *Scene) {
 // A SingleSystem is a base system that can only hold one entity.
 // Use case would be a scrolling background for example.
 type SingleSystem struct {
-	id         uint
-	components []Component
-	active     bool
+	ID         uint
+	Components []Component
+	Active     bool
 }
 
 func (ss *SingleSystem) GetComponent(id uint, name string) Component {
-	if ss.id == id {
+	if ss.ID == id {
 		var i int
 		req := ss.RequiredComponents()
 		for i = 0; i < len(req); i++ {
@@ -85,7 +85,7 @@ func (ss *SingleSystem) GetComponent(id uint, name string) Component {
 			}
 		}
 
-		return ss.components[i]
+		return ss.Components[i]
 
 	} else {
 		return nil
@@ -96,15 +96,15 @@ func (ss *SingleSystem) GetComponent(id uint, name string) Component {
 func (*SingleSystem) RequiredComponents() []string { return []string{} }
 
 func (ss *SingleSystem) Add(id uint, components []Component) {
-	ss.id = id
-	ss.components = components
-	ss.active = true
+	ss.ID = id
+	ss.Components = components
+	ss.Active = true
 }
 
 func (ss *SingleSystem) Remove(id uint) {
-	ss.active = false
+	ss.Active = false
 }
 
 func (ss *SingleSystem) Init(scene *Scene) {
-	ss.active = false
+	ss.Active = false
 }

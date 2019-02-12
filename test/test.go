@@ -3,6 +3,9 @@ package main
 import (
 	"gitlocal/gome"
 	"gitlocal/gome/common"
+	"time"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type PolygonEntity struct {
@@ -16,13 +19,49 @@ func (pe *PolygonEntity) New(data interface{}) error {
 			Vertices: data.([]float32),
 		},
 		"Space": &common.SpaceComponent{
-			Position: gome.Vector{X: 0, Y: 0},
-			Size:     gome.Vector{X: 200, Y: 200},
+			Position: gome.FloatVector{X: 0, Y: 0},
+			Size:     gome.FloatVector{X: 1, Y: 1},
 		},
 	}
 
 	return nil
 }
+
+/*
+	ControlSystem
+*/
+
+type ControlComponent struct{}
+
+func (*ControlComponent) Name() string { return "Control" }
+
+type ControlSystem struct {
+	gome.SingleSystem
+}
+
+func (*ControlSystem) RequiredComponents() []string { return []string{"Control", "Space"} }
+
+func (cs *ControlSystem) Init(scene *gome.Scene) {
+	cs.SingleSystem.Init(scene)
+
+	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
+		key := msg.(gome.KeyboardMessage).Key
+		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
+
+		switch key.Sym {
+		case sdl.K_w:
+			spaceComponent.Position.Y += .01
+		case sdl.K_s:
+			spaceComponent.Position.Y -= .01
+		case sdl.K_a:
+			spaceComponent.Position.X -= .01
+		case sdl.K_d:
+			spaceComponent.Position.X += .01
+		}
+	})
+}
+
+func (cs *ControlSystem) Update(delta time.Duration) {}
 
 func TestSpawn() {
 	pEntity := &PolygonEntity{}
@@ -31,6 +70,9 @@ func TestSpawn() {
 		0.25, -0.25, 0.0,
 		0.0, 0.25, 0.0,
 	})
+
+	// make the entity controllable
+	pEntity.BaseEntity.Components["Control"] = &ControlComponent{}
 
 	pEntity2 := &PolygonEntity{}
 	pEntity2.New([]float32{
@@ -65,6 +107,7 @@ func TestSpawn() {
 				},
 				Systems: []gome.System{
 					&common.RenderSystem{},
+					&ControlSystem{},
 				},
 			},
 		},
