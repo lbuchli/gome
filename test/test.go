@@ -48,15 +48,17 @@ func (cs *ControlSystem) Init(scene *gome.Scene) {
 		key := msg.(gome.KeyboardMessage).Key
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		switch key.Sym {
-		case sdl.K_w:
-			spaceComponent.Position.Y += .01
-		case sdl.K_s:
-			spaceComponent.Position.Y -= .01
-		case sdl.K_a:
-			spaceComponent.Position.X -= .01
-		case sdl.K_d:
-			spaceComponent.Position.X += .01
+		if msg.(gome.KeyboardMessage).State == sdl.PRESSED {
+			switch key.Sym {
+			case sdl.K_w:
+				spaceComponent.Position.Y += .01
+			case sdl.K_s:
+				spaceComponent.Position.Y -= .01
+			case sdl.K_a:
+				spaceComponent.Position.X -= .01
+			case sdl.K_d:
+				spaceComponent.Position.X += .01
+			}
 		}
 	})
 }

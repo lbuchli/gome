@@ -2,17 +2,21 @@ package gome
 
 import "time"
 
+// A scene contains all Entities and Systems used for one game scene.
 type Scene struct {
 	Entities []Entity
 	Systems  []System
 }
 
+// Update gets called every frame.
 func (s *Scene) Update(delta time.Duration) {
 	for _, system := range s.Systems {
 		system.Update(delta)
 	}
 }
 
+// Init initializes the Scene, initializing the systems and adding
+// entities to them.
 func (s *Scene) Init() {
 	// initialize the systems
 	for _, system := range s.Systems {

@@ -71,6 +71,7 @@ func (win *Window) handleEvents() {
 			kEvent := event.(*sdl.KeyboardEvent)
 			MailBox.Send(KeyboardMessage{
 				Key:       kEvent.Keysym,
+				State:     kEvent.State,
 				Timestamp: kEvent.GetTimestamp(),
 			})
 		}

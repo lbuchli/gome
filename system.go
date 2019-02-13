@@ -18,10 +18,12 @@ type System interface {
 
 	// Add adds an entity to the system  or overwrites an existing one using
 	// its ID and the components required by the system in the same order as
-	// RequiredComponents demands.
+	// RequiredComponents demands. It should only be called when adding an Enttiy
+	// to the scene.
 	Add(id uint, components []Component)
 
-	// Remove removes a single entity added to the system and its components.
+	// remove removes a single entity added to the system and its components.
+	// remove should only be called when removing an Entity from the scene.
 	Remove(id uint)
 
 	// Init initializes the system.

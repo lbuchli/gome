@@ -63,8 +63,10 @@ func (mb *mailBox) Listen(msgName string, fun func(Message)) {
 	Default Messages
 */
 
+// A KeyboardMessage is sent when keyboard events occur.
 type KeyboardMessage struct {
 	Key       sdl.Keysym
+	State     uint8
 	Timestamp uint32
 }
 

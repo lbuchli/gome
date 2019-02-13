@@ -23,12 +23,6 @@ type RenderComponent struct {
 
 func (rc *RenderComponent) Name() string { return "Render" }
 
-// VertexArrayToObj generates a VAO from vertex data and its stride size (dimensions)
-func VertexArrayToObj(array []float32, stride int32) (VAO uint32) {
-
-	return
-}
-
 /*
 	RenderSystem
 */
@@ -58,6 +52,11 @@ void main() {
 }
 ` + "\x00"
 
+type glObject struct {
+	vbo uint32
+	vao uint32
+}
+
 // A RenderSystem renders the texture of its entities
 type RenderSystem struct {
 	gome.MultiSystem
@@ -66,7 +65,7 @@ type RenderSystem struct {
 
 	// glObjects contains pointer to OpenGL Objects.
 	// VBO, VAO
-	glObjects map[uint][]uint32
+	glObjects map[uint]glObject
 }
 
 func (*RenderSystem) RequiredComponents() []string { return []string{"Render", "Space"} }
@@ -75,7 +74,7 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	// initialize the base system
 	rs.MultiSystem.Init(scene)
 
-	rs.glObjects = make(map[uint][]uint32)
+	rs.glObjects = make(map[uint]glObject)
 
 	// initialize OpenGL
 	gl.Init()
@@ -152,7 +151,7 @@ func (rs *RenderSystem) Add(id uint, components []gome.Component) {
 	gl.BindVertexArray(0)         // unbind the array (there is no vertex array at 0)
 
 	// save the pointers for later
-	rs.glObjects[id] = []uint32{VBO, VAO}
+	rs.glObjects[id] = glObject{vbo: VBO, vao: VAO}
 }
 
 func (rs *RenderSystem) Update(delta time.Duration) {
@@ -168,13 +167,13 @@ func (rs *RenderSystem) Update(delta time.Duration) {
 		glObj := rs.glObjects[id]
 
 		// bind the buffer
-		gl.BindBuffer(gl.ARRAY_BUFFER, glObj[0])
+		gl.BindBuffer(gl.ARRAY_BUFFER, glObj.vbo)
 
 		// write new data into buffer
 		gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(converted)*4, gl.Ptr(converted))
 
 		// bind the vertex array
-		gl.BindVertexArray(glObj[1])
+		gl.BindVertexArray(glObj.vao)
 
 		vertexCount := int32(len(renderComponent.Vertices)) / renderComponent.Stride
 		gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
