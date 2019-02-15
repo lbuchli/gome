@@ -10,15 +10,13 @@ import (
 // A Vector holds an X and a Y value and can be
 // used for positions or directions.
 type Vector struct {
-	X uint
-	Y uint
+	X, Y, Z uint
 }
 
 // A FloatVector holds an X and a Y float value and can be
 // used for positions or directions.
 type FloatVector struct {
-	X float32
-	Y float32
+	X, Y, Z float32
 }
 
 // Throw outputs an error to console and stops execution

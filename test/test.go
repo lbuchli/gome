@@ -13,14 +13,24 @@ type PolygonEntity struct {
 }
 
 func (pe *PolygonEntity) New(data interface{}) error {
+	vdata := data.([]float32)
 	pe.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
 			Stride:   3,
-			Vertices: data.([]float32),
+			Vertices: vdata[:len(vdata)-4],
+			Indices: []uint32{
+				0, 1, 2,
+			},
+			Color: common.Color{
+				R: vdata[len(vdata)-4],
+				G: vdata[len(vdata)-3],
+				B: vdata[len(vdata)-2],
+				A: vdata[len(vdata)-1],
+			},
 		},
 		"Space": &common.SpaceComponent{
-			Position: gome.FloatVector{X: 0, Y: 0},
-			Size:     gome.FloatVector{X: 1, Y: 1},
+			Position: gome.FloatVector{X: 0, Y: 0, Z: 0},
+			Size:     gome.FloatVector{X: 1, Y: 1, Z: 1},
 		},
 	}
 
@@ -71,6 +81,7 @@ func TestSpawn() {
 		-0.25, -0.25, 0.0,
 		0.25, -0.25, 0.0,
 		0.0, 0.25, 0.0,
+		1.0, 0.0, 0.0, 1.0, // color
 	})
 
 	// make the entity controllable
@@ -81,6 +92,7 @@ func TestSpawn() {
 		0.25, -0.25, 0.0,
 		0.75, -0.25, 0.0,
 		0.5, 0.25, 0.0,
+		0.0, 1.0, 0.0, 1.0, // color
 	})
 	pEntity2.BaseEntity.ID = 1
 
@@ -89,6 +101,7 @@ func TestSpawn() {
 		0.0, 0.25, 0.0,
 		0.5, 0.25, 0.0,
 		0.25, 0.75, 0.0,
+		0.0, 0.0, 1.0, 1.0, // color
 	})
 	pEntity3.BaseEntity.ID = 2
 
