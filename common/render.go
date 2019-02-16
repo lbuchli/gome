@@ -55,10 +55,10 @@ const fragmentShaderSrc string = `
 
 uniform vec4 u_Color;
 
-out vec4 frag_color;
+out vec4 fColor;
 
 void main() {
-    frag_color = u_Color;
+    fColor = u_Color;
 }
 ` + "\x00"
 
@@ -98,26 +98,28 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	gl.Init()
 	fmt.Println("OpenGL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
 
-	// TEMP enable debug output
-	gl.Enable(gl.DEBUG_OUTPUT)
-	gl.DebugMessageCallback(func(
-		source uint32,
-		gltype uint32,
-		id uint32,
-		severity uint32,
-		length int32,
-		message string,
-		userParam unsafe.Pointer) {
+	// if debug is enabled, show debug output
+	if scene.WindowArgs.Debug {
+		gl.Enable(gl.DEBUG_OUTPUT)
+		gl.DebugMessageCallback(func(
+			source uint32,
+			gltype uint32,
+			id uint32,
+			severity uint32,
+			length int32,
+			message string,
+			userParam unsafe.Pointer) {
 
-		// warn if it's an error
-		errWarning := ""
-		if gltype == gl.DEBUG_TYPE_ERROR {
-			errWarning = "** ERROR **"
-		}
+			// warn if it's an error
+			errWarning := ""
+			if gltype == gl.DEBUG_TYPE_ERROR {
+				errWarning = "** ERROR **"
+			}
 
-		fmt.Printf("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-			errWarning, gltype, severity, message)
-	}, gl.Ptr(nil))
+			fmt.Printf("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+				errWarning, gltype, severity, message)
+		}, gl.Ptr(nil))
+	}
 
 	// compile the shaders
 	fmt.Println("Compiling vertex shader...")

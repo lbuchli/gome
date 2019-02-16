@@ -53,22 +53,33 @@ func (*ControlSystem) RequiredComponents() []string { return []string{"Control",
 
 func (cs *ControlSystem) Init(scene *gome.Scene) {
 	cs.SingleSystem.Init(scene)
+	currentcontrolled := uint(3)
 
-	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
-		key := msg.(gome.KeyboardMessage).Key
+	gome.MailBox.Listen("MouseScroll", func(msg gome.Message) {
+		mmsg := msg.(gome.MouseScrollMessage)
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		if msg.(gome.KeyboardMessage).State == sdl.PRESSED {
-			switch key.Sym {
-			case sdl.K_w:
-				spaceComponent.Position.Y += .01
-			case sdl.K_s:
-				spaceComponent.Position.Y -= .01
-			case sdl.K_a:
-				spaceComponent.Position.X -= .01
-			case sdl.K_d:
-				spaceComponent.Position.X += .01
-			}
+		spaceComponent.Position.X += mmsg.X / 128
+		spaceComponent.Position.Y += mmsg.Y / 128
+	})
+
+	gome.MailBox.Listen("MouseButton", func(msg gome.Message) {
+		mmsg := msg.(gome.MouseButtonMessage)
+		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
+
+		if mmsg.State == sdl.PRESSED {
+			spaceComponent.Position.X = mmsg.X - 0.25
+			spaceComponent.Position.Y = mmsg.Y + 1.5
+		}
+	})
+
+	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
+		kmsg := msg.(gome.KeyboardMessage)
+
+		if kmsg.State == sdl.PRESSED && kmsg.Key.Sym == sdl.K_SPACE {
+			scene.RemoveComponent(currentcontrolled, "Control")
+			currentcontrolled = currentcontrolled%3 + 1
+			scene.AddComponent(currentcontrolled, &ControlComponent{})
 		}
 	})
 }
@@ -76,6 +87,22 @@ func (cs *ControlSystem) Init(scene *gome.Scene) {
 func (cs *ControlSystem) Update(delta time.Duration) {}
 
 func TestSpawn() {
+	window := &gome.Window{
+		Args: gome.WindowArguments{
+			X:      0,
+			Y:      0,
+			Width:  1024,
+			Height: 1024,
+			Title:  "TEST",
+			Debug:  true,
+		},
+	}
+
+	window.Init()
+
+	scene1 := &gome.Scene{}
+	window.AddScene(scene1)
+
 	pEntity := &PolygonEntity{}
 	pEntity.New([]float32{
 		-0.25, -0.25, 0.0,
@@ -84,9 +111,6 @@ func TestSpawn() {
 		1.0, 0.0, 0.0, 1.0, // color
 	})
 
-	// make the entity controllable
-	pEntity.BaseEntity.Components["Control"] = &ControlComponent{}
-
 	pEntity2 := &PolygonEntity{}
 	pEntity2.New([]float32{
 		0.25, -0.25, 0.0,
@@ -94,7 +118,6 @@ func TestSpawn() {
 		0.5, 0.25, 0.0,
 		0.0, 1.0, 0.0, 1.0, // color
 	})
-	pEntity2.BaseEntity.ID = 1
 
 	pEntity3 := &PolygonEntity{}
 	pEntity3.New([]float32{
@@ -103,31 +126,20 @@ func TestSpawn() {
 		0.25, 0.75, 0.0,
 		0.0, 0.0, 1.0, 1.0, // color
 	})
-	pEntity3.BaseEntity.ID = 2
 
-	window := &gome.Window{
-		Args: gome.WindowArguments{
-			X:      0,
-			Y:      0,
-			Width:  1024,
-			Height: 1024,
-			Title:  "TEST",
-		},
-		Scenes: []*gome.Scene{
-			&gome.Scene{
-				Entities: []gome.Entity{
-					pEntity,
-					pEntity2,
-					pEntity3,
-				},
-				Systems: []gome.System{
-					&common.RenderSystem{},
-					&ControlSystem{},
-				},
-			},
-		},
-		Current: 0,
-	}
+	// make the entity controllable
+	pEntity3.BaseEntity.Components["Control"] = &ControlComponent{}
+
+	scene1.AddEntities(
+		pEntity,
+		pEntity2,
+		pEntity3,
+	)
+
+	scene1.AddSystems(
+		&common.RenderSystem{},
+		&ControlSystem{},
+	)
 
 	window.Spawn()
 }

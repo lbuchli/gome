@@ -69,3 +69,29 @@ type KeyboardMessage struct {
 }
 
 func (KeyboardMessage) Name() string { return "Keyboard" }
+
+// A MouseButtonMessage is sent when a mouse button gets pressed or released.
+type MouseButtonMessage struct {
+	Button    uint8
+	State     uint8
+	X, Y      float32
+	Timestamp uint32
+}
+
+func (MouseButtonMessage) Name() string { return "MouseButton" }
+
+// A MouseMotionMessage is sent when the mouse gets moved.
+type MouseMotionMessage struct {
+	X, Y, XRel, YRel float32
+	Timestamp        uint32
+}
+
+func (MouseMotionMessage) Name() string { return "MouseMotion" }
+
+// A MouseScrollMessage is sent when the mouse wheel gets moved.
+type MouseScrollMessage struct {
+	X, Y      float32
+	Timestamp uint32
+}
+
+func (MouseScrollMessage) Name() string { return "MouseScroll" }

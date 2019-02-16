@@ -26,6 +26,9 @@ type System interface {
 	// remove should only be called when removing an Entity from the scene.
 	Remove(id uint)
 
+	// Has checks if the entity is in the system.
+	Has(id uint) bool
+
 	// Init initializes the system.
 	Init(scene *Scene)
 
@@ -63,6 +66,11 @@ func (ms *MultiSystem) Add(id uint, components []Component) {
 
 func (ms *MultiSystem) Remove(id uint) {
 	delete(ms.Entities, id)
+}
+
+func (ms *MultiSystem) Has(id uint) bool {
+	_, exists := ms.Entities[id]
+	return exists
 }
 
 func (ms *MultiSystem) Init(scene *Scene) {
@@ -105,6 +113,10 @@ func (ss *SingleSystem) Add(id uint, components []Component) {
 
 func (ss *SingleSystem) Remove(id uint) {
 	ss.Active = false
+}
+
+func (ss *SingleSystem) Has(id uint) bool {
+	return ss.ID == id
 }
 
 func (ss *SingleSystem) Init(scene *Scene) {
