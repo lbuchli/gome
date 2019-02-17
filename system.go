@@ -32,6 +32,9 @@ type System interface {
 	// Init initializes the system.
 	Init(scene *Scene)
 
+	// Focus gets called when the scene gets shown.
+	Focus(scene *Scene)
+
 	// Update gets called every frame and given the time since the last frame
 	// in miliseconds.
 	Update(delta time.Duration)
@@ -76,6 +79,8 @@ func (ms *MultiSystem) Has(id uint) bool {
 func (ms *MultiSystem) Init(scene *Scene) {
 	ms.Entities = make(map[uint][]Component)
 }
+
+func (ms *MultiSystem) Focus(scene *Scene) {}
 
 // A SingleSystem is a base system that can only hold one entity.
 // Use case would be a scrolling background for example.
@@ -122,3 +127,5 @@ func (ss *SingleSystem) Has(id uint) bool {
 func (ss *SingleSystem) Init(scene *Scene) {
 	ss.Active = false
 }
+
+func (ss *SingleSystem) Focus(scene *Scene) {}

@@ -1,6 +1,7 @@
 package gome
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -9,9 +10,9 @@ import (
 type Window struct {
 	Args        WindowArguments
 	scenes      []*Scene
-	current     uint
+	current     int
 	window      *sdl.Window
-	stopCurrent chan bool
+	stopCurrent bool
 }
 
 type WindowArguments struct {
@@ -23,31 +24,34 @@ type WindowArguments struct {
 	Debug  bool
 }
 
-func (win *Window) SetScene(scene uint) {
-	// request stopping current scene
-	win.stopCurrent <- true
-
-	// wait until it has stopped
-	<-win.stopCurrent
-
-	// set new scene
-	win.current = scene
-
-	// and start it
-	win.runCurrentScene()
-}
-
 func (win *Window) AddScene(scene *Scene) {
-	scene.Init(win.Args)
+	context, err := win.window.GLCreateContext()
+	if err != nil {
+		Throw(err, "Could not create OpenGL context")
+	}
+	scene.glcontext = context
+
 	win.scenes = append(win.scenes, scene)
 }
 
 func (win *Window) AddScenes(scenes ...*Scene) {
+	for _, scene := range scenes {
+		context, err := win.window.GLCreateContext()
+		if err != nil {
+			Throw(err, "Could not create OpenGL contexts")
+		}
+		scene.glcontext = context
+	}
+
 	win.scenes = append(win.scenes, scenes...)
 }
 
-func (win *Window) GetScene(scene uint) *Scene {
+func (win *Window) GetScene(scene int) *Scene {
 	return win.scenes[scene]
+}
+
+func (win *Window) Current() int {
+	return win.current
 }
 
 func (win *Window) Init() {
@@ -63,7 +67,8 @@ func (win *Window) Init() {
 	if err != nil {
 		panic(err)
 	}
-	win.window.GLCreateContext()
+
+	MailBox.open()
 
 	win.scenes = make([]*Scene, 0)
 }
@@ -73,8 +78,12 @@ func (win *Window) Spawn() {
 	defer sdl.Quit()
 	defer win.window.Destroy()
 
-	win.stopCurrent = make(chan bool, 1)
-	win.runCurrentScene()
+	// run current scene
+	// when the current scene switches, the method will terminate
+	// and it will loop to the next current scene.
+	for {
+		win.runCurrentScene()
+	}
 }
 
 // handleEvents handles all the SDL events
@@ -125,6 +134,34 @@ func (win *Window) handleEvents(quit chan bool) {
 
 // runScene initializes and then updates the scene for as long as it's running
 func (win *Window) runCurrentScene() {
+	if win.Args.Debug {
+		fmt.Println("Displaying Scene:", win.current)
+	}
+
+	// listen for change scene message
+	MailBox.Listen("ChangeScene", func(msg Message) {
+		cmsg := msg.(ChangeSceneMessage)
+		win.stopCurrent = true
+
+		if cmsg.Relative {
+			win.current += cmsg.NewScene
+
+			// make scene increase wrap around
+			win.current = win.current % len(win.scenes)
+		} else {
+			win.current = cmsg.NewScene
+		}
+
+		// reopen the mailbox
+		MailBox.open()
+	})
+
+	// set OpenGL context
+	err := win.window.GLMakeCurrent(win.scenes[win.current].glcontext)
+	if err != nil {
+		Throw(err, "Could not set OpenGL context")
+	}
+
 	// initialize all systems
 	win.scenes[win.current].Init(win.Args)
 
@@ -135,7 +172,7 @@ func (win *Window) runCurrentScene() {
 
 	eventQuit := make(chan bool, 1)
 
-	for running {
+	for running && !win.stopCurrent {
 		// handle events; quit if requested
 		go win.handleEvents(eventQuit)
 
@@ -149,15 +186,10 @@ func (win *Window) runCurrentScene() {
 		// update the window
 		win.window.GLSwap()
 
-		// check if we should break the loop without blocking
-		select {
-		case stop := <-win.stopCurrent:
-			running = stop
-		default:
-			// block until handleEvents returned something
-			running = !<-eventQuit
-		}
+		// wait for event handling to finish
+		<-eventQuit
 	}
 
-	win.stopCurrent <- false
+	// reset
+	win.stopCurrent = false
 }

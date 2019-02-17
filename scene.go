@@ -2,14 +2,18 @@ package gome
 
 import (
 	"time"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 // A scene contains all Entities and Systems used for one game scene.
 type Scene struct {
-	entities   []Entity
-	systems    []System
-	idCount    uint
-	WindowArgs WindowArguments
+	entities      []Entity
+	systems       []System
+	idCount       uint
+	isInitialized bool
+	glcontext     sdl.GLContext
+	WindowArgs    WindowArguments
 }
 
 // Update gets called every frame.
@@ -22,11 +26,35 @@ func (s *Scene) Update(delta time.Duration) {
 // Init initializes the Scene, initializing the systems and adding
 // entities to them.
 func (s *Scene) Init(args WindowArguments) {
-	s.WindowArgs = args
+	// only initialize if it's not already initialized
+	if !s.isInitialized {
+		s.WindowArgs = args
+		s.isInitialized = true
+
+		for _, system := range s.systems {
+			s.addSystemAfterInit(system)
+		}
+
+		for _, entity := range s.entities {
+			s.addEntityAfterInit(entity)
+		}
+	}
+
+	for _, system := range s.systems {
+		system.Focus(s)
+	}
 }
 
 // AddSystem adds a System to the Scene
 func (s *Scene) AddSystem(system System) {
+	s.systems = append(s.systems, system)
+
+	if s.isInitialized {
+		s.addSystemAfterInit(system)
+	}
+}
+
+func (s *Scene) addSystemAfterInit(system System) {
 	system.Init(s)
 
 	required := system.RequiredComponents()
@@ -46,8 +74,6 @@ func (s *Scene) AddSystem(system System) {
 			system.Add(uint(entity.GetID()), supply)
 		}
 	}
-
-	s.systems = append(s.systems, system)
 }
 
 // AddSystems adds multiple Systems to the Scene
@@ -69,6 +95,14 @@ func (s *Scene) newEntityID() uint {
 
 // AddEntity adds an Entity to the Scene
 func (s *Scene) AddEntity(entity Entity) {
+	s.entities = append(s.entities, entity)
+
+	if s.isInitialized {
+		s.addEntityAfterInit(entity)
+	}
+}
+
+func (s *Scene) addEntityAfterInit(entity Entity) {
 	entity.setID(s.newEntityID())
 
 	components := entity.GetComponents()
@@ -87,8 +121,6 @@ func (s *Scene) AddEntity(entity Entity) {
 			system.Add(uint(entity.GetID()), supply)
 		}
 	}
-
-	s.entities = append(s.entities, entity)
 }
 
 // AddEntities adds multiple Entities to the Scene.

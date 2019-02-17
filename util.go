@@ -42,7 +42,7 @@ type mailBox struct {
 
 // The MailBox is used to communicate between systems. Through the MailBox, one
 // can send Messages and listen for them.
-var MailBox *mailBox = &mailBox{make(map[string][]func(Message))}
+var MailBox *mailBox
 
 // Send sends a Message through the MailBox to functions listening for
 // that type of Message.
@@ -55,6 +55,11 @@ func (mb *mailBox) Send(msg Message) {
 // Listen adds the function to the group listening for a Message of a specific type.
 func (mb *mailBox) Listen(msgName string, fun func(Message)) {
 	mb.listeners[msgName] = append(mb.listeners[msgName], fun)
+}
+
+// open (re-)opens the mailbox, forgetting all current listeners.
+func (mb *mailBox) open() {
+	MailBox = &mailBox{make(map[string][]func(Message))}
 }
 
 /*
@@ -95,3 +100,11 @@ type MouseScrollMessage struct {
 }
 
 func (MouseScrollMessage) Name() string { return "MouseScroll" }
+
+// A ChangeSceneMessage will change the current scene
+type ChangeSceneMessage struct {
+	NewScene int
+	Relative bool
+}
+
+func (ChangeSceneMessage) Name() string { return "ChangeScene" }

@@ -96,10 +96,13 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 
 	// initialize OpenGL
 	gl.Init()
-	fmt.Println("OpenGL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
 
 	// if debug is enabled, show debug output
 	if scene.WindowArgs.Debug {
+		// opengl version
+		fmt.Println("OpenGL Version:", gl.GoStr(gl.GetString(gl.VERSION)))
+
+		// error and debug outptut
 		gl.Enable(gl.DEBUG_OUTPUT)
 		gl.DebugMessageCallback(func(
 			source uint32,
@@ -122,12 +125,16 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	}
 
 	// compile the shaders
-	fmt.Println("Compiling vertex shader...")
+	if scene.WindowArgs.Debug {
+		fmt.Println("Compiling vertex shader...")
+	}
 	vertexShader, err := compileShader(vertexShaderSrc, gl.VERTEX_SHADER)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Compiling fragment shader...")
+	if scene.WindowArgs.Debug {
+		fmt.Println("Compiling fragment shader...")
+	}
 	fragmentShader, err := compileShader(fragmentShaderSrc, gl.FRAGMENT_SHADER)
 	if err != nil {
 		panic(err)

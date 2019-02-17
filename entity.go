@@ -21,7 +21,7 @@ type Entity interface {
 
 	// New fills the Entity with default and additional data. What data is accepted by the
 	// entity depends on the Entity and should be documented by the method implementation.
-	New(data interface{}) error
+	New() error
 }
 
 // A BaseEntity is a helper struct one can implement into their Entity. The BaseEntity is not
