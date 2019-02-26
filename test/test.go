@@ -24,8 +24,8 @@ func (pe *PolygonEntity) New() error {
 			Color:    pe.Color,
 		},
 		"Space": &common.SpaceComponent{
-			Position: gome.FloatVector{X: 0, Y: 0, Z: 0},
-			Size:     gome.FloatVector{X: 1, Y: 1, Z: 1},
+			Position: gome.FloatVector3{X: 0, Y: 0, Z: 0},
+			Size:     gome.FloatVector3{X: 1, Y: 1, Z: 1},
 		},
 	}
 

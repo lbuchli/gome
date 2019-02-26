@@ -1,30 +1,23 @@
 package gome
 
 import (
+	"io"
 	"log"
 	"runtime/debug"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-// A Vector holds an X and a Y value and can be
-// used for positions or directions.
-type Vector struct {
-	X, Y, Z uint
-}
-
-// A FloatVector holds an X and a Y float value and can be
-// used for positions or directions.
-type FloatVector struct {
-	X, Y, Z float32
-}
-
 // Throw outputs an error to console and stops execution
 // it should only be used in top-level functions, as returning the
 // error is required for unit testing
 func Throw(err error, msg string) {
-	debug.PrintStack()
-	log.Fatalf("=> %v: %s", err, msg)
+	if err != nil {
+		debug.PrintStack()
+		log.Fatalf("=> %v: %s", err, msg)
+	} else {
+		log.Fatalln(msg)
+	}
 }
 
 /*
@@ -108,3 +101,17 @@ type ChangeSceneMessage struct {
 }
 
 func (ChangeSceneMessage) Name() string { return "ChangeScene" }
+
+/*
+	File Reader
+*/
+
+// A FileReader reads a file of a specific type. A FileReader normally
+// has a Data(file io.Reader) method returning the whole file data.
+type FileReader interface {
+	// Check checks if a file is of the right type.
+	Check(io.Reader) bool
+
+	// Extension returns the default file extention for this file type.
+	Extension() string
+}
