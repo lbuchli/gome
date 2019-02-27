@@ -20,6 +20,8 @@ type Shader struct {
 
 // init initializes the shader and compiles the source
 func (s *Shader) Init(shaderPath string) (err error) {
+	s.uniformLocs = make(map[string]int32)
+
 	f, err := os.Open(shaderPath)
 	if err != nil {
 		return

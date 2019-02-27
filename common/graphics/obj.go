@@ -53,9 +53,9 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 	tempPositionIndices := []uint32{}
 	tempUVIndices := []uint32{}
 	tempNormalIndices := []uint32{}
-	tempPositions := []gome.FloatVector3{}
-	tempUVs := []gome.FloatVector2{}
-	tempNormals := []gome.FloatVector3{}
+	tempPositions := []gome.FloatVector{}
+	tempUVs := []gome.FloatVector{}
+	tempNormals := []gome.FloatVector{}
 
 	for {
 		// read the file line by line
@@ -117,15 +117,15 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		// only use the uv if there are textures
 		uv := gome.FloatVector2{}
 		if len(tempUVs) > 0 {
-			uv = tempUVs[tempUVIndices[i]-1]
+			uv = tempUVs[tempUVIndices[i]-1].(gome.FloatVector2)
 		}
 
 		// check if there is a match
 		for j, vertex := range vertices {
 			if vertex.IsSimilarTo(
-				tempPositions[tempPositionIndices[i]-1],
+				tempPositions[tempPositionIndices[i]-1].(gome.FloatVector3),
 				uv,
-				tempNormals[tempNormalIndices[i]-1],
+				tempNormals[tempNormalIndices[i]-1].(gome.FloatVector3),
 			) {
 				// there is a similar vertex, use it instead
 				indices = append(indices, uint32(j))
@@ -138,9 +138,9 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		if !matched {
 			indices = append(indices, uint32(len(vertices)))
 			vertices = append(vertices, objVertex{
-				position: tempPositions[tempPositionIndices[i]-1],
+				position: tempPositions[tempPositionIndices[i]-1].(gome.FloatVector3),
 				uv:       uv,
-				normal:   tempNormals[tempNormalIndices[i]-1],
+				normal:   tempNormals[tempNormalIndices[i]-1].(gome.FloatVector3),
 			})
 		}
 	}

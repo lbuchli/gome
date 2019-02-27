@@ -1,6 +1,10 @@
 package graphics
 
-import "github.com/go-gl/gl/v4.6-core/gl"
+import (
+	"gitlocal/gome"
+
+	"github.com/go-gl/gl/v4.6-core/gl"
+)
 
 type ElementType uint32
 
@@ -37,17 +41,17 @@ func (et ElementType) getByteSize() (size int) {
 func (et ElementType) getGLType() (gltype uint32) {
 	switch et {
 	case VEC2:
-		return gl.INT_VEC2
+		return gl.INT
 	case VEC3:
-		return gl.INT_VEC3
+		return gl.INT
 	case VEC4:
-		return gl.INT_VEC4
+		return gl.INT
 	case FVEC2:
-		return gl.FLOAT_VEC2
+		return gl.FLOAT
 	case FVEC3:
-		return gl.FLOAT_VEC3
+		return gl.FLOAT
 	case FVEC4:
-		return gl.FLOAT_VEC4
+		return gl.FLOAT
 	default:
 		return 0
 	}
@@ -118,17 +122,25 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 }
 
 // SetData sets the buffer data at a specific index to be equal to the slice of data.
-func (va *VertexArray) SetData(index int, data interface{}) (err error) {
+func (va *VertexArray) SetData(index int, data []gome.FloatVector) (err error) {
 	// Vertex Buffer Object
 	var VBO uint32
 	gl.GenBuffers(1, &VBO)              // generates the buffer (or multiple)
 	gl.BindBuffer(gl.ARRAY_BUFFER, VBO) // tells OpenGL what kind of buffer this is
+	va.vbos[index] = VBO                // save the vbo
+
+	// change data to raw floats
+	// TODO consider using opengl vectors
+	raw := []float32{}
+	for _, vec := range data {
+		raw = append(raw, vec.ToArray()...)
+	}
 
 	// BufferData assigns data to the buffer.
 	// there can only be one ARRAY_BUFFER, so OpenGL knows which buffer we mean if we
 	// tell it what type of buffer it is.
 	//			  type			   size (in bytes)   pointer to data	usage
-	gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(0), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(raw), gl.STATIC_DRAW)
 
 	va.vbos[index] = VBO
 
