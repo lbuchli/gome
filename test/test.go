@@ -10,18 +10,13 @@ import (
 
 type PolygonEntity struct {
 	gome.BaseEntity
-	Vertices []float32
-	Indices  []uint32
-	Color    common.Color
+	Path string
 }
 
 func (pe *PolygonEntity) New() error {
 	pe.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
-			Stride:   3,
-			Vertices: pe.Vertices,
-			Indices:  pe.Indices,
-			Color:    pe.Color,
+			OBJPath: pe.Path,
 		},
 		"Space": &common.SpaceComponent{
 			Position: gome.FloatVector3{X: 0, Y: 0, Z: 0},
@@ -108,117 +103,13 @@ func TestSpawn() {
 	win.AddScene(scene1)
 
 	pEntity := &PolygonEntity{
-		Vertices: []float32{
-			-0.25, -0.25, 0.0,
-			0.25, -0.25, 0.0,
-			0.0, 0.25, 0.0,
-		},
-		Indices: []uint32{
-			0, 1, 2,
-		},
-		Color: common.Color{
-			R: 1.0, G: 0.0, B: 0.0, A: 1.0,
-		},
-	}
-
-	pEntity2 := &PolygonEntity{
-		Vertices: []float32{
-			0.25, -0.25, 0.0,
-			0.75, -0.25, 0.0,
-			0.5, 0.25, 0.0,
-		},
-		Indices: []uint32{
-			0, 1, 2,
-		},
-		Color: common.Color{
-			R: 0.0, G: 1.0, B: 0.0, A: 1.0,
-		},
-	}
-
-	pEntity3 := &PolygonEntity{
-		Vertices: []float32{
-			0.0, 0.25, 0.0,
-			0.5, 0.25, 0.0,
-			0.25, 0.75, 0.0,
-		},
-		Indices: []uint32{
-			0, 1, 2,
-		},
-		Color: common.Color{
-			R: 0.0, G: 0.0, B: 1.0, A: 1.0,
-		},
+		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test1.obj",
 	}
 
 	pEntity.New()
-	pEntity2.New()
-	pEntity3.New()
 
-	// make the entity controllable
-	pEntity3.BaseEntity.Components["Control"] = &ControlComponent{}
-
-	scene1.AddEntities(
-		pEntity,
-		pEntity2,
-		pEntity3,
-	)
-
-	scene1.AddSystems(
-		&common.RenderSystem{},
-		&ControlSystem{},
-	)
-
-	/* SCENE 2 */
-
-	scene2 := &gome.Scene{}
-	win.AddScene(scene2)
-
-	qEntity := &PolygonEntity{
-		Vertices: []float32{
-			-0.25, -0.25, 0.0,
-			0.25, -0.25, 0.0,
-			0.25, 0.25, 0.0,
-			-0.25, 0.25, 0.0,
-		},
-		Indices: []uint32{
-			0, 1, 2,
-			0, 2, 3,
-		},
-		Color: common.Color{
-			R: 0.0, G: 0.0, B: 1.0, A: 1.0,
-		},
-	}
-
-	qEntity2 := &PolygonEntity{
-		Vertices: []float32{
-			0.25, -0.25, 0.0,
-			0.75, -0.25, 0.0,
-			0.75, 0.25, 0.0,
-			0.25, 0.25, 0.0,
-		},
-		Indices: []uint32{
-			0, 1, 2,
-			0, 2, 3,
-		},
-		Color: common.Color{
-			R: 0.0, G: 1.0, B: 0.0, A: 1.0,
-		},
-	}
-
-	qEntity.New()
-	qEntity2.New()
-
-	// make the entity controllable
-	qEntity.BaseEntity.Components["Control"] = &ControlComponent{}
-
-	scene2.AddEntities(
-		qEntity,
-		qEntity2,
-	)
-
-	scene2.AddSystems(
-		&common.RenderSystem{},
-		&ControlSystem{},
-	)
+	scene1.AddEntity(pEntity)
+	scene1.AddSystem(&common.RenderSystem{})
 
 	win.Spawn()
 }

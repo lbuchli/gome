@@ -13,7 +13,7 @@ import (
 
 type Shader struct {
 	filePath    string
-	program     uint32
+	Program     uint32
 	shaders     []uint32
 	uniformLocs map[string]int32
 }
@@ -107,7 +107,7 @@ func (s *Shader) getUniformLocation(name string) (location int32) {
 	}
 
 	// if it's not in our location cache, get it from opengl and save it in the cache
-	location = gl.GetUniformLocation(s.program, gl.Str(name+"\x00"))
+	location = gl.GetUniformLocation(s.Program, gl.Str(name+"\x00"))
 	s.uniformLocs[name] = location
 	return location
 }

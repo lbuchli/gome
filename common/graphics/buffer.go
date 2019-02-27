@@ -108,7 +108,7 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 		// index, size, type, normalized, stride of vertex (in bytes), pointer (offset)
 		// point positions
 		gl.VertexAttribPointer(uint32(i), int32(elem.getByteSize()),
-			elem.getGLType(), false, int32(stride), gl.Ptr(uint32(offset)))
+			elem.getGLType(), false, int32(stride), gl.PtrOffset(offset))
 		gl.EnableVertexAttribArray(uint32(i))
 		offset += elem.getByteSize()
 	}
@@ -145,7 +145,8 @@ func (va *VertexArray) SetIndexData(data []uint32) {
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(data)*4, gl.Ptr(data), gl.STATIC_DRAW)
 }
 
-// Bind binds the VertexArray, allowing it to be drawn.
-func (va *VertexArray) Bind() {
+// Draw draws the vertex array.
+func (va *VertexArray) Draw() {
 	gl.BindVertexArray(va.vao)
+	gl.DrawElements(gl.TRIANGLES, int32(len(va.data)), gl.UNSIGNED_INT, nil)
 }

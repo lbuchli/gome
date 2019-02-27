@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var OBJ_VERTEX_LAYOUT = VertexLayout{layout: []ElementType{}}
+var OBJ_VERTEX_LAYOUT = VertexLayout{layout: []ElementType{VEC3, VEC2, VEC3}}
 
 // A VertexObject contains all data needed by a renderer to draw a single object.
 type VertexObject struct {
