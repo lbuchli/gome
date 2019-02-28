@@ -17,24 +17,29 @@ const (
 	FVEC4
 )
 
-// getByteSize returns the type size in bytes
-func (et ElementType) getByteSize() (size int) {
+// getSize returns the type size.
+func (et ElementType) getSize() (size int) {
 	switch et {
 	case VEC2:
-		return 4 * 2
+		return 2
 	case VEC3:
-		return 4 * 3
+		return 3
 	case VEC4:
-		return 4 * 4
+		return 4
 	case FVEC2:
-		return 4 * 2
+		return 2
 	case FVEC3:
-		return 4 * 3
+		return 3
 	case FVEC4:
-		return 4 * 4
+		return 4
 	default:
 		return 0
 	}
+}
+
+// getByteSize returns the type size in bytes.
+func (et ElementType) getByteSize() (bytesize int) {
+	return et.getSize() * 4
 }
 
 // getGLType returns the type as a OpenGL constant
@@ -99,6 +104,7 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 	gl.BindVertexArray(va.vao)     // binds the vertex array
 
 	// make vertex array pointer attributes
+	// offset is the offset in bytes to the first attribute
 	offset := 0
 
 	// calculate vertex stride
@@ -111,7 +117,7 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 		// define an array of generic vertex attribute data
 		// index, size, type, normalized, stride of vertex (in bytes), pointer (offset)
 		// point positions
-		gl.VertexAttribPointer(uint32(i), int32(elem.getByteSize()),
+		gl.VertexAttribPointer(uint32(i), int32(elem.getSize()),
 			elem.getGLType(), false, int32(stride), gl.PtrOffset(offset))
 		gl.EnableVertexAttribArray(uint32(i))
 		offset += elem.getByteSize()

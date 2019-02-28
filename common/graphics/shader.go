@@ -35,7 +35,10 @@ func (s *Shader) Init(shaderPath string) (err error) {
 
 		for {
 			line, err := reader.ReadString('\n')
-			if err != nil && err != io.EOF {
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
 				return err
 			}
 
@@ -64,8 +67,19 @@ func (s *Shader) Init(shaderPath string) (err error) {
 			if err != nil {
 				return
 			}
+		} else {
+			break
 		}
 	}
+
+	// link shaders
+	s.Program = gl.CreateProgram()
+	for _, shader := range s.shaders {
+		gl.AttachShader(s.Program, shader)
+	}
+	gl.LinkProgram(s.Program)
+
+	return
 }
 
 // compile compiles a shader from source and returns the shader ID and, if occurred,

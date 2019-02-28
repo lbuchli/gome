@@ -95,6 +95,7 @@ func (s *Scene) newEntityID() uint {
 
 // AddEntity adds an Entity to the Scene
 func (s *Scene) AddEntity(entity Entity) {
+	entity.setID(s.newEntityID())
 	s.entities = append(s.entities, entity)
 
 	if s.isInitialized {
@@ -103,10 +104,13 @@ func (s *Scene) AddEntity(entity Entity) {
 }
 
 func (s *Scene) addEntityAfterInit(entity Entity) {
-	entity.setID(s.newEntityID())
-
 	components := entity.GetComponents()
 	for _, system := range s.systems {
+		// don't add to systems the entity is already in
+		if system.Has(entity.GetID()) {
+			continue
+		}
+
 		required := system.RequiredComponents()
 		supply := []Component{}
 
