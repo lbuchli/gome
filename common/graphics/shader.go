@@ -3,24 +3,26 @@ package graphics
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"gitlocal/gome"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Shader struct {
 	filePath    string
 	Program     uint32
-	shaders     []uint32
 	uniformLocs map[string]int32
 }
 
 // init initializes the shader and compiles the source
 func (s *Shader) Init(shaderPath string) (err error) {
 	s.uniformLocs = make(map[string]int32)
+	shaders := []uint32{}
 
 	f, err := os.Open(shaderPath)
 	if err != nil {
@@ -29,13 +31,34 @@ func (s *Shader) Init(shaderPath string) (err error) {
 
 	reader := bufio.NewReader(f)
 
+	shaderTypeLine, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	// eof gets set to true if we reached the end of the file
+	eof := false
+
 	for {
 		shader := ""
+
+		// decide on the shader type
 		var shaderType uint32
+		typeStr := strings.Split(shaderTypeLine, " ")[1]
+		switch strings.ToLower(typeStr) {
+		case "vertex\n":
+			shaderType = gl.VERTEX_SHADER
+		case "fragment\n":
+			shaderType = gl.FRAGMENT_SHADER
+		default:
+			err = errors.New("Shader type " + typeStr + " not known.")
+			return err
+		}
 
 		for {
 			line, err := reader.ReadString('\n')
 			if err == io.EOF {
+				eof = true
 				break
 			}
 			if err != nil {
@@ -44,17 +67,8 @@ func (s *Shader) Init(shaderPath string) (err error) {
 
 			// start a new shader string with a new type if the line starts with "#shader"
 			if strings.HasPrefix(line, "#shader") {
-				typeStr := strings.Split(line, " ")[1]
-				switch strings.ToLower(typeStr) {
-				case "vertex\n":
-					shaderType = gl.VERTEX_SHADER
-				case "fragment\n":
-					shaderType = gl.FRAGMENT_SHADER
-				default:
-					err = errors.New("Shader type " + typeStr + " not known.")
-					return err
-				}
-
+				// tell the next iteration the information on shader type we read
+				shaderTypeLine = line
 				break
 			} else {
 				shader += line
@@ -63,30 +77,41 @@ func (s *Shader) Init(shaderPath string) (err error) {
 
 		// if the shader is not empty, compile it
 		if len(shader) > 0 {
-			err = s.compile(shader+"\x00", shaderType)
+			shaderptr, err := s.compile(shader+"\x00", shaderType)
 			if err != nil {
-				return
+				return err
 			}
+
+			shaders = append(shaders, shaderptr)
 		} else {
+			break
+		}
+
+		if eof {
 			break
 		}
 	}
 
 	// link shaders
 	s.Program = gl.CreateProgram()
-	for _, shader := range s.shaders {
+	for _, shader := range shaders {
 		gl.AttachShader(s.Program, shader)
 	}
 	gl.LinkProgram(s.Program)
+
+	// delete the singke shaders. we won't need them anymore
+	for _, shader := range shaders {
+		gl.DeleteShader(shader)
+	}
 
 	return
 }
 
 // compile compiles a shader from source and returns the shader ID and, if occurred,
 // an error. The shaderType can be any OpenGL shader type, e.g. gl.VERTEX_SHADER
-func (s *Shader) compile(source string, shaderType uint32) (err error) {
+func (s *Shader) compile(source string, shaderType uint32) (shader uint32, err error) {
 	// create a shader from source (returns shader ID)
-	shader := gl.CreateShader(shaderType)
+	shader = gl.CreateShader(shaderType)
 	csource, free := gl.Strs(source) // returns a C String and a function to free the memory
 	//				shader, count, source string, length (unused)
 	gl.ShaderSource(shader, 1, csource, nil)
@@ -109,8 +134,6 @@ func (s *Shader) compile(source string, shaderType uint32) (err error) {
 		err = errors.New("Failed to compile OpenGL shader:\n" + log)
 	}
 
-	s.shaders = append(s.shaders, shader)
-
 	return
 }
 
@@ -124,6 +147,11 @@ func (s *Shader) getUniformLocation(name string) (location int32) {
 
 	// if it's not in our location cache, get it from opengl and save it in the cache
 	location = gl.GetUniformLocation(s.Program, gl.Str(name+"\x00"))
+	if location == -1 {
+		fmt.Println("ERROR: Could not find uniform:", name)
+		return
+	}
+
 	s.uniformLocs[name] = location
 	return location
 }
@@ -131,35 +159,55 @@ func (s *Shader) getUniformLocation(name string) (location int32) {
 // Sets a uniform value.
 func (s *Shader) SetUniformFVec2(name string, value gome.FloatVector2) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform2f(loc, value.X, value.Y)
+	if loc != -1 {
+		gl.Uniform2f(loc, value.X, value.Y)
+	}
 }
 
 // Sets a uniform value.
 func (s *Shader) SetUniformFVec3(name string, value gome.FloatVector3) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform3f(loc, value.X, value.Y, value.Z)
+	if loc != -1 {
+		gl.Uniform3f(loc, value.X, value.Y, value.Z)
+	}
 }
 
 // Sets a uniform value.
 func (s *Shader) SetUniformFVec4(name string, value gome.FloatVector4) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform4f(loc, value.W, value.X, value.Y, value.Z)
+	if loc != -1 {
+		gl.Uniform4f(loc, value.W, value.X, value.Y, value.Z)
+	}
 }
 
 // Sets a uniform value.
 func (s *Shader) SetUniformVec2(name string, value gome.Vector2) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform2i(loc, value.X, value.Y)
+	if loc != -1 {
+		gl.Uniform2i(loc, value.X, value.Y)
+	}
 }
 
 // Sets a uniform value.
 func (s *Shader) SetUniformVec3(name string, value gome.Vector3) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform3i(loc, value.X, value.Y, value.Z)
+	if loc != -1 {
+		gl.Uniform3i(loc, value.X, value.Y, value.Z)
+	}
 }
 
 // Sets a uniform value.
 func (s *Shader) SetUniformVec4(name string, value gome.Vector4) {
 	loc := s.getUniformLocation(name)
-	gl.Uniform4i(loc, value.W, value.X, value.Y, value.Z)
+	if loc != -1 {
+		gl.Uniform4i(loc, value.W, value.X, value.Y, value.Z)
+	}
+}
+
+// Sets a uniform value.
+func (s *Shader) SetUniformFMat4(name string, value mgl32.Mat4) {
+	loc := s.getUniformLocation(name)
+	if loc != -1 {
+		gl.UniformMatrix4fv(loc, 1, false, &value[0])
+	}
 }

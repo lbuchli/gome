@@ -34,6 +34,7 @@ type RenderSystem struct {
 	gome.MultiSystem
 
 	graphics.Shader
+	cameraSystem *CameraSystem
 }
 
 func (*RenderSystem) RequiredComponents() []string { return []string{"Render", "Space"} }
@@ -44,6 +45,11 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 
 	// initialize OpenGL
 	gl.Init()
+
+	// Configure global opengl settings
+	//gl.Enable(gl.DEPTH_TEST)
+	//gl.DepthFunc(gl.LESS)
+	//gl.ClearColor(0, 0, 0, 0) // set the clear color
 
 	// if debug is enabled, show debug output
 	if scene.WindowArgs.Debug {
@@ -74,6 +80,14 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 
 	// init shader
 	rs.Shader.Init("/home/lukas/go/src/gitlocal/gome/common/graphics/default.shader")
+
+	// get the camera system, and if there isn't one, add a new instance to the scene.
+	if scene.HasSystem("Camera") {
+		rs.cameraSystem = scene.GetSystem("Camera").(*CameraSystem)
+	} else {
+		rs.cameraSystem = &CameraSystem{}
+		scene.AddSystem(rs.cameraSystem)
+	}
 }
 
 func (rs *RenderSystem) Add(id uint, components []gome.Component) {
@@ -96,23 +110,23 @@ func (rs *RenderSystem) Add(id uint, components []gome.Component) {
 }
 
 func (rs *RenderSystem) Update(delta time.Duration) {
-	gl.ClearColor(0, 0, 0, 0)     // set the clear color
 	gl.Clear(gl.COLOR_BUFFER_BIT) // apply clear color
 
 	gl.UseProgram(rs.Shader.Program)
+
+	// View Projection Matrix
+	VPM := rs.cameraSystem.viewProjectionMatrix()
 
 	for _, components := range rs.MultiSystem.Entities {
 		renderComponent := components[0].(*RenderComponent)
 		spaceComponent := components[1].(*SpaceComponent)
 		VAO := &renderComponent.array
 
-		// size
-		size := spaceComponent.Size
-		rs.Shader.SetUniformFVec3("u_Size", size)
-		// position
-		position := spaceComponent.Position
-		rs.Shader.SetUniformFVec3("u_Position", position)
+		modelMatrix := spaceComponent.modelMatrix
+		rs.Shader.SetUniformFMat4("u_MVP", VPM.Mul4(modelMatrix))
 
 		VAO.Draw()
 	}
 }
+
+func (*RenderSystem) Name() string { return "Render" }

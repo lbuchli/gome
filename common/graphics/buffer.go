@@ -148,10 +148,10 @@ func (va *VertexArray) SetData(index int, data []gome.FloatVector) (err error) {
 	}
 
 	// BufferData assigns data to the buffer.
-	// there can only be one ARRAY_BUFFER, so OpenGL knows which buffer we mean if we
+	// there can only be one ARRAY_BUFFER bound at any time, so OpenGL knows which buffer we mean if we
 	// tell it what type of buffer it is.
 	//			  type			   size (in bytes)   pointer to data	usage
-	gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(raw), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(raw)*4, gl.Ptr(raw), gl.STATIC_DRAW)
 
 	return
 }
@@ -165,11 +165,12 @@ func (va *VertexArray) SetIndexData(data []uint32) {
 	// BufferData assigns data to the buffer.
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(data)*4, gl.Ptr(data), gl.STATIC_DRAW)
 
-	va.vertices = len(data) / len(va.layout.layout)
+	va.vertices = len(data)
 }
 
 // Draw draws the vertex array.
 func (va *VertexArray) Draw() {
 	gl.BindVertexArray(va.vao)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, va.ibo)
 	gl.DrawElements(gl.TRIANGLES, int32(va.vertices), gl.UNSIGNED_INT, nil)
 }

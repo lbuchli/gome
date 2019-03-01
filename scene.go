@@ -54,6 +54,29 @@ func (s *Scene) AddSystem(system System) {
 	}
 }
 
+// HasSystem checks if there is a system of a specific type in this scene.
+func (s *Scene) HasSystem(name string) bool {
+	for _, system := range s.systems {
+		if system.Name() == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetSystem returns a specific system in the scene. Returns nil if the system
+// is not found.
+func (s *Scene) GetSystem(name string) System {
+	for _, system := range s.systems {
+		if system.Name() == name {
+			return system
+		}
+	}
+
+	return nil
+}
+
 func (s *Scene) addSystemAfterInit(system System) {
 	system.Init(s)
 

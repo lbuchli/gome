@@ -41,6 +41,8 @@ type ControlSystem struct {
 
 func (*ControlSystem) RequiredComponents() []string { return []string{"Control", "Space"} }
 
+func (*ControlSystem) Name() string { return "Control" }
+
 func (cs *ControlSystem) Focus(scene *gome.Scene) {
 	cs.SingleSystem.Focus(scene)
 	currentcontrolled := uint(3)

@@ -1,6 +1,6 @@
 package gome
 
-const precision = float32(1*10 ^ -5)
+const precision = float32(10 ^ -4)
 
 /*
 	Vectors

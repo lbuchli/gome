@@ -38,6 +38,9 @@ type System interface {
 	// Update gets called every frame and given the time since the last frame
 	// in miliseconds.
 	Update(delta time.Duration)
+
+	// Name returns the name of the system. (E.g. "Render")
+	Name() string
 }
 
 // A MultiSystem is a base system that can hold multiple entites.
