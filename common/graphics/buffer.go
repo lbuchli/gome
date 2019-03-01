@@ -84,11 +84,11 @@ func (vbl *VertexLayout) stride() int {
 
 // A VertexArray is an array of vertices saved on the GPU memory.
 type VertexArray struct {
-	layout VertexLayout
-	data   []interface{}
-	vao    uint32
-	ibo    uint32
-	vbos   []uint32
+	layout   VertexLayout
+	vertices int
+	vao      uint32
+	ibo      uint32
+	vbos     []uint32
 }
 
 // SetLayout sets the vertex layout, but only once.
@@ -98,6 +98,9 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 	}
 
 	va.layout = layout
+
+	// make as many vbos as there are vertex array pointer attributes
+	va.vbos = make([]uint32, len(layout.layout))
 
 	// generate and bind the vertex array
 	gl.GenVertexArrays(1, &va.vao) // generates the vertex array (or multiple)
@@ -109,11 +112,19 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 
 	// calculate vertex stride
 	stride := 0
-	for _, elem := range va.layout.layout {
+	for i, elem := range va.layout.layout {
 		stride += elem.getByteSize()
+
+		// Vertex Buffer Object
+		var VBO uint32
+		gl.GenBuffers(1, &VBO) // generates the buffer (or multiple)
+		va.vbos[i] = VBO       // save the vbo
 	}
 
 	for i, elem := range va.layout.layout {
+		// bind the respective vbo
+		gl.BindBuffer(gl.ARRAY_BUFFER, va.vbos[i])
+
 		// define an array of generic vertex attribute data
 		// index, size, type, normalized, stride of vertex (in bytes), pointer (offset)
 		// point positions
@@ -123,17 +134,11 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 		offset += elem.getByteSize()
 	}
 
-	// make as many vbos as there are vertex array pointer attributes
-	va.vbos = make([]uint32, len(layout.layout))
 }
 
 // SetData sets the buffer data at a specific index to be equal to the slice of data.
 func (va *VertexArray) SetData(index int, data []gome.FloatVector) (err error) {
-	// Vertex Buffer Object
-	var VBO uint32
-	gl.GenBuffers(1, &VBO)              // generates the buffer (or multiple)
-	gl.BindBuffer(gl.ARRAY_BUFFER, VBO) // tells OpenGL what kind of buffer this is
-	va.vbos[index] = VBO                // save the vbo
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbos[index]) // tells OpenGL what kind of buffer this is
 
 	// change data to raw floats
 	// TODO consider using opengl vectors
@@ -148,8 +153,6 @@ func (va *VertexArray) SetData(index int, data []gome.FloatVector) (err error) {
 	//			  type			   size (in bytes)   pointer to data	usage
 	gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(raw), gl.STATIC_DRAW)
 
-	va.vbos[index] = VBO
-
 	return
 }
 
@@ -161,10 +164,12 @@ func (va *VertexArray) SetIndexData(data []uint32) {
 
 	// BufferData assigns data to the buffer.
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(data)*4, gl.Ptr(data), gl.STATIC_DRAW)
+
+	va.vertices = len(data) / len(va.layout.layout)
 }
 
 // Draw draws the vertex array.
 func (va *VertexArray) Draw() {
 	gl.BindVertexArray(va.vao)
-	gl.DrawElements(gl.TRIANGLES, int32(len(va.data)), gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, int32(va.vertices), gl.UNSIGNED_INT, nil)
 }

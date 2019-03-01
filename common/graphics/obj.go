@@ -110,6 +110,7 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 	indices := []uint32{}
 
 	// process temporary data
+	// TODO fix indexing
 	for i := 0; i < len(tempPositionIndices); i++ {
 
 		var matched bool
@@ -145,11 +146,22 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		}
 	}
 
+	vertexcount := len(vertices)
+	positions := make([]gome.FloatVector, vertexcount)
+	uvs := make([]gome.FloatVector, vertexcount)
+	normals := make([]gome.FloatVector, vertexcount)
+
+	for i, vertex := range vertices {
+		positions[i] = vertex.position
+		uvs[i] = vertex.uv
+		normals[i] = vertex.normal
+	}
+
 	// set vertex data
 	data.SetLayout(OBJ_VERTEX_LAYOUT)
-	data.SetData(0, tempPositions)
-	data.SetData(1, tempUVs)
-	data.SetData(2, tempNormals)
+	data.SetData(0, positions)
+	data.SetData(1, uvs)
+	data.SetData(2, normals)
 	data.SetIndexData(indices)
 
 	return
