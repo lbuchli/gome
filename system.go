@@ -95,23 +95,14 @@ type SingleSystem struct {
 
 func (ss *SingleSystem) GetComponent(id uint, name string) Component {
 	if ss.ID == id {
-		var i int
-		req := ss.RequiredComponents()
-		for i = 0; i < len(req); i++ {
-			if req[i] == name {
-				break
+		for _, comp := range ss.Components {
+			if comp.Name() == name {
+				return comp
 			}
 		}
-
-		return ss.Components[i]
-
-	} else {
-		return nil
 	}
+	return nil
 }
-
-// RequiredComponents should be overwritten.
-func (*SingleSystem) RequiredComponents() []string { return []string{} }
 
 func (ss *SingleSystem) Add(id uint, components []Component) {
 	ss.ID = id

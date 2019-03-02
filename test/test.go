@@ -14,14 +14,15 @@ type PolygonEntity struct {
 }
 
 func (pe *PolygonEntity) New() error {
+	spaceComponent := &common.SpaceComponent{}
+	spaceComponent.SetPosition(gome.FloatVector3{X: .5, Y: .5, Z: .5})
+	spaceComponent.SetSize(gome.FloatVector3{X: .5, Y: .5, Z: .5})
+
 	pe.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
 			OBJPath: pe.Path,
 		},
-		"Space": &common.SpaceComponent{
-			Position: gome.FloatVector3{X: 0, Y: 0, Z: 0},
-			Size:     gome.FloatVector3{X: 1, Y: 1, Z: 1},
-		},
+		"Space": spaceComponent,
 	}
 
 	return nil
@@ -46,23 +47,24 @@ func (*ControlSystem) Name() string { return "Control" }
 func (cs *ControlSystem) Focus(scene *gome.Scene) {
 	cs.SingleSystem.Focus(scene)
 	currentcontrolled := uint(3)
+	currentRot := float32(0)
 
 	gome.MailBox.Listen("MouseScroll", func(msg gome.Message) {
 		mmsg := msg.(gome.MouseScrollMessage)
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		spaceComponent.Position.X += mmsg.X / 128
-		spaceComponent.Position.Y += mmsg.Y / 128
+		currentRot += mmsg.X
+		spaceComponent.SetRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, currentRot)
 	})
 
 	gome.MailBox.Listen("MouseButton", func(msg gome.Message) {
-		mmsg := msg.(gome.MouseButtonMessage)
-		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
+		//mmsg := msg.(gome.MouseButtonMessage)
+		//spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		if mmsg.State == sdl.PRESSED {
-			spaceComponent.Position.X = mmsg.X - 0.25
-			spaceComponent.Position.Y = mmsg.Y + 1.5
-		}
+		//if mmsg.State == sdl.PRESSED {
+		//spaceComponent.Position.X = mmsg.X - 0.25
+		//spaceComponent.Position.Y = mmsg.Y + 1.5
+		//}
 	})
 
 	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
@@ -110,8 +112,20 @@ func TestSpawn() {
 
 	pEntity.New()
 
-	scene1.AddEntity(pEntity)
-	scene1.AddSystem(&common.RenderSystem{})
+	cameraEntity := &common.CameraEntity{}
+	cameraEntity.New()
+
+	cameraEntity.BaseEntity.Components["Control"] = &ControlComponent{}
+
+	scene1.AddEntities(
+		pEntity,
+		cameraEntity,
+	)
+	scene1.AddSystems(
+		&common.RenderSystem{},
+		&ControlSystem{},
+		&common.CameraSystem{},
+	)
 
 	win.Spawn()
 }

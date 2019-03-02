@@ -49,7 +49,7 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	// Configure global opengl settings
 	//gl.Enable(gl.DEPTH_TEST)
 	//gl.DepthFunc(gl.LESS)
-	//gl.ClearColor(0, 0, 0, 0) // set the clear color
+	gl.ClearColor(0, 0, 0, 0) // set the clear color
 
 	// if debug is enabled, show debug output
 	if scene.WindowArgs.Debug {
@@ -87,6 +87,11 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	} else {
 		rs.cameraSystem = &CameraSystem{}
 		scene.AddSystem(rs.cameraSystem)
+
+		// there's probably also no camera entity, so add it as well
+		cameraEntity := &CameraEntity{}
+		cameraEntity.New()
+		scene.AddEntity(cameraEntity)
 	}
 }
 
@@ -122,8 +127,8 @@ func (rs *RenderSystem) Update(delta time.Duration) {
 		spaceComponent := components[1].(*SpaceComponent)
 		VAO := &renderComponent.array
 
-		modelMatrix := spaceComponent.modelMatrix
-		rs.Shader.SetUniformFMat4("u_MVP", VPM.Mul4(modelMatrix))
+		modelMatrix := spaceComponent.modelMatrix()
+		rs.Shader.SetUniformFMat4("u_MVP", modelMatrix.Mul4(VPM))
 
 		VAO.Draw()
 	}

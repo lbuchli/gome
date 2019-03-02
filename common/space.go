@@ -8,41 +8,50 @@ import (
 
 // A SpaceComponent gives an Entity a size and a position.
 type SpaceComponent struct {
-	modelMatrix mgl32.Mat4
-	position    gome.FloatVector3
-	rotation    gome.FloatVector3
+	translationMatrix mgl32.Mat4
+	rotationMatrix    mgl32.Mat4
+	scaleMatrix       mgl32.Mat4
 }
 
 func (*SpaceComponent) Name() string { return "Space" }
 
-// LookAt positions and rotates the entity in space.
-//
-// pos:      The entities' position.
-// target:   The target the entity looks at.
-// rotation: The rotation of the entity. ((0, 1, 0) most of the time)
-func (sc *SpaceComponent) LookAt(pos, target, rotation gome.FloatVector3) {
-	sc.modelMatrix = mgl32.LookAt(
-		pos.X, pos.Y, pos.Z,
-		target.X, target.Y, target.Z,
-		rotation.X, rotation.Y, rotation.Z,
-	)
-
-	sc.position = pos
-	sc.rotation = target
+func (sc *SpaceComponent) modelMatrix() mgl32.Mat4 {
+	return sc.translationMatrix.
+		Mul4(sc.rotationMatrix).
+		Mul4(sc.scaleMatrix)
 }
 
-func (sc *SpaceComponent) Rotate(rotation gome.FloatVector3) {
-	// TODO
+func (sc *SpaceComponent) SetPosition(pos gome.FloatVector3) {
+	sc.translationMatrix = mgl32.Translate3D(pos.X, pos.Y, pos.Z)
 }
 
-func (sc *SpaceComponent) Move(position gome.FloatVector3) {
-	// TODO
+func (sc *SpaceComponent) SetRotation(axis gome.FloatVector3, angle float32) {
+	sc.rotationMatrix = sc.rotationMatrix.Mul4(mgl32.QuatRotate(angle,
+		mgl32.Vec3{
+			axis.X,
+			axis.Y,
+			axis.Z,
+		}).Mat4())
+}
+
+func (sc *SpaceComponent) SetSize(size gome.FloatVector3) {
+	sc.scaleMatrix = mgl32.Scale3D(size.X, size.Y, size.Z)
 }
 
 func (sc *SpaceComponent) GetPosition() gome.FloatVector3 {
-	return sc.position
+	lastRow := sc.translationMatrix.Row(3)
+	return gome.FloatVector3{
+		X: lastRow.X(),
+		Y: lastRow.Y(),
+		Z: lastRow.Z(),
+	}
 }
 
-func (sc *SpaceComponent) GetRotation() gome.FloatVector3 {
-	return sc.rotation
+func (sc *SpaceComponent) GetSize() gome.FloatVector3 {
+	diag := sc.rotationMatrix.Diag()
+	return gome.FloatVector3{
+		X: diag.X(),
+		Y: diag.Y(),
+		Z: diag.Z(),
+	}
 }
