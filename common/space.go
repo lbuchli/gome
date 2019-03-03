@@ -16,6 +16,19 @@ type SpaceComponent struct {
 func (*SpaceComponent) Name() string { return "Space" }
 
 func (sc *SpaceComponent) modelMatrix() mgl32.Mat4 {
+	// make empty matrices to identity matrices so they don't change
+	// the result of the multiplication
+	empty := mgl32.Mat4{}
+	if sc.translationMatrix == empty {
+		sc.translationMatrix = mgl32.Ident4()
+	}
+	if sc.rotationMatrix == empty {
+		sc.rotationMatrix = mgl32.Ident4()
+	}
+	if sc.scaleMatrix == empty {
+		sc.rotationMatrix = mgl32.Ident4()
+	}
+
 	return sc.translationMatrix.
 		Mul4(sc.rotationMatrix).
 		Mul4(sc.scaleMatrix)

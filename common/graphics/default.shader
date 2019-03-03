@@ -10,8 +10,8 @@ in vec3 vertex_normal;
 out vec3 normal;
 
 void main() {
-    gl_Position = u_MVP * vec4(vertex_pos, 1.0);
 	normal = vertex_normal;
+    gl_Position = u_MVP * vec4(vertex_pos, 1.0);
 }
 
 #shader fragment
@@ -22,5 +22,5 @@ in vec3 normal;
 out vec4 fColor;
 
 void main() {
-    fColor = vec4(normal + vec3(.5, .5, .5), 1.0);
+    fColor = vec4(1.0, normal);
 }

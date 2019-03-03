@@ -15,8 +15,8 @@ type PolygonEntity struct {
 
 func (pe *PolygonEntity) New() error {
 	spaceComponent := &common.SpaceComponent{}
-	spaceComponent.SetPosition(gome.FloatVector3{X: .5, Y: .5, Z: .5})
-	spaceComponent.SetSize(gome.FloatVector3{X: .5, Y: .5, Z: .5})
+	spaceComponent.SetPosition(gome.FloatVector3{X: 0, Y: 0, Z: -.5})
+	spaceComponent.SetSize(gome.FloatVector3{X: 2, Y: 2, Z: 2})
 
 	pe.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
@@ -46,25 +46,17 @@ func (*ControlSystem) Name() string { return "Control" }
 
 func (cs *ControlSystem) Focus(scene *gome.Scene) {
 	cs.SingleSystem.Focus(scene)
-	currentcontrolled := uint(3)
-	currentRot := float32(0)
+	currentRot := gome.FloatVector2{X: 0, Y: 0}
+	currentPos := gome.FloatVector3{X: 0, Y: 0, Z: 0}
 
 	gome.MailBox.Listen("MouseScroll", func(msg gome.Message) {
 		mmsg := msg.(gome.MouseScrollMessage)
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		currentRot += mmsg.X
-		spaceComponent.SetRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, currentRot)
-	})
-
-	gome.MailBox.Listen("MouseButton", func(msg gome.Message) {
-		//mmsg := msg.(gome.MouseButtonMessage)
-		//spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
-
-		//if mmsg.State == sdl.PRESSED {
-		//spaceComponent.Position.X = mmsg.X - 0.25
-		//spaceComponent.Position.Y = mmsg.Y + 1.5
-		//}
+		currentRot.X += float32(mmsg.X) / 1000000
+		currentRot.Y += float32(mmsg.Y) / 1000000
+		spaceComponent.SetRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, currentRot.X)
+		spaceComponent.SetRotation(gome.FloatVector3{X: 0, Y: 1, Z: 0}, currentRot.Y)
 	})
 
 	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
@@ -72,17 +64,18 @@ func (cs *ControlSystem) Focus(scene *gome.Scene) {
 
 		if kmsg.State == sdl.PRESSED {
 			switch kmsg.Key.Sym {
-			case sdl.K_SPACE:
-				scene.RemoveComponent(currentcontrolled, "Control")
-				currentcontrolled = currentcontrolled%3 + 1
-				scene.AddComponent(currentcontrolled, &ControlComponent{})
-			case sdl.K_TAB:
-				// switch scenes
-				gome.MailBox.Send(gome.ChangeSceneMessage{
-					NewScene: 1,
-					Relative: true,
-				})
+			case sdl.K_w:
+				currentPos.Z += .0001
+			case sdl.K_s:
+				currentPos.Z -= .0001
+			case sdl.K_d:
+				currentPos.X += .0001
+			case sdl.K_a:
+				currentPos.X -= .0001
 			}
+
+			spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
+			spaceComponent.SetPosition(currentPos)
 		}
 	})
 }
@@ -94,8 +87,8 @@ func TestSpawn() {
 		Args: gome.WindowArguments{
 			X:      0,
 			Y:      0,
-			Width:  1024,
-			Height: 1024,
+			Width:  1920,
+			Height: 1080,
 			Title:  "TEST",
 			Debug:  true,
 		},
@@ -107,13 +100,20 @@ func TestSpawn() {
 	win.AddScene(scene1)
 
 	pEntity := &PolygonEntity{
-		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test1.obj",
+		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test2.obj",
 	}
 
 	pEntity.New()
 
 	cameraEntity := &common.CameraEntity{}
 	cameraEntity.New()
+
+	cameraEntity.Lens(
+		.5,
+		1,
+		0.1,
+		100,
+	)
 
 	cameraEntity.BaseEntity.Components["Control"] = &ControlComponent{}
 

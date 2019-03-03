@@ -12,7 +12,7 @@ import (
 */
 
 type CameraComponent struct {
-	viewMatrix mgl32.Mat4
+	projectionMatrix mgl32.Mat4
 }
 
 func (*CameraComponent) Name() string { return "Camera" }
@@ -28,7 +28,7 @@ type CameraEntity struct {
 
 func (ce *CameraEntity) New() error {
 	spaceComponent := &SpaceComponent{}
-	spaceComponent.SetPosition(gome.FloatVector3{X: 0.5, Y: 0, Z: 0.25})
+	spaceComponent.SetPosition(gome.FloatVector3{X: 0, Y: 0, Z: 0})
 	spaceComponent.SetSize(gome.FloatVector3{X: 1, Y: 1, Z: 1})
 
 	ce.BaseEntity.Components = map[string]gome.Component{
@@ -36,8 +36,8 @@ func (ce *CameraEntity) New() error {
 	}
 
 	ce.Lens(
-		mgl32.DegToRad(120),
-		1,
+		mgl32.DegToRad(100),
+		16/9,
 		0.1,
 		100,
 	)
@@ -53,7 +53,7 @@ func (ce *CameraEntity) New() error {
 // fcp:   Far clipping plane. Keep as little as possible.
 func (ce *CameraEntity) Lens(fov, ratio, ncp, fcp float32) {
 	ce.BaseEntity.Components["Camera"] = &CameraComponent{
-		viewMatrix: mgl32.Perspective(fov, ratio, ncp, fcp),
+		projectionMatrix: mgl32.Perspective(fov, ratio, ncp, fcp),
 	}
 }
 
@@ -67,11 +67,11 @@ type CameraSystem struct {
 }
 
 // viewProjectionMatrix returns the current View Projection Matrix
-func (cs *CameraSystem) viewProjectionMatrix() mgl32.Mat4 {
-	if cs.Active {
-		viewMatrix := cs.SingleSystem.Components[0].(*CameraComponent).viewMatrix
-		projectionMatrix := cs.SingleSystem.Components[1].(*SpaceComponent).modelMatrix()
-		return viewMatrix.Mul4(projectionMatrix)
+func (cs *CameraSystem) projectionViewMatrix() mgl32.Mat4 {
+	if cs.SingleSystem.Active {
+		projectionMatrix := cs.SingleSystem.Components[0].(*CameraComponent).projectionMatrix
+		viewMatrix := cs.SingleSystem.Components[1].(*SpaceComponent).modelMatrix()
+		return projectionMatrix.Mul4(viewMatrix)
 	}
 
 	return mgl32.Ident4()
@@ -79,6 +79,6 @@ func (cs *CameraSystem) viewProjectionMatrix() mgl32.Mat4 {
 
 func (*CameraSystem) Name() string { return "Camera" }
 
-func (*CameraSystem) RequiredComponents() []string { return []string{"Camera, Space"} }
+func (*CameraSystem) RequiredComponents() []string { return []string{"Camera", "Space"} }
 
 func (*CameraSystem) Update(delta time.Duration) {}

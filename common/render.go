@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 /*
@@ -47,8 +48,8 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	gl.Init()
 
 	// Configure global opengl settings
-	//gl.Enable(gl.DEPTH_TEST)
-	//gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0, 0, 0, 0) // set the clear color
 
 	// if debug is enabled, show debug output
@@ -115,20 +116,23 @@ func (rs *RenderSystem) Add(id uint, components []gome.Component) {
 }
 
 func (rs *RenderSystem) Update(delta time.Duration) {
-	gl.Clear(gl.COLOR_BUFFER_BIT) // apply clear color
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // apply clear color
 
 	gl.UseProgram(rs.Shader.Program)
 
-	// View Projection Matrix
-	VPM := rs.cameraSystem.viewProjectionMatrix()
+	// Projection View Matrix
+	PVM := rs.cameraSystem.projectionViewMatrix()
 
 	for _, components := range rs.MultiSystem.Entities {
 		renderComponent := components[0].(*RenderComponent)
 		spaceComponent := components[1].(*SpaceComponent)
 		VAO := &renderComponent.array
 
-		modelMatrix := spaceComponent.modelMatrix()
-		rs.Shader.SetUniformFMat4("u_MVP", modelMatrix.Mul4(VPM))
+		MVP := PVM.Mul4(spaceComponent.modelMatrix())
+		rs.Shader.SetUniformFMat4("u_MVP", MVP)
+
+		test := MVP.Mul4x1(mgl32.Vec4{1, 1, 1, 1})
+		_ = fmt.Sprint(test)
 
 		VAO.Draw()
 	}

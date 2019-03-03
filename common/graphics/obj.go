@@ -69,6 +69,9 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 			return data, err
 		}
 
+		// clip the newline char from the line
+		line = line[:len(line)-1]
+
 		words := strings.Split(line, " ")
 
 		// check the first word to identify the line type
@@ -99,9 +102,9 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 			for _, word := range words[1:] {
 				// append the indices for one vertex
 				split := strings.Split(word, "/")
-				tempPositionIndices = append(tempPositionIndices, convertToUint32(split[0]))
-				tempUVIndices = append(tempUVIndices, convertToUint32(split[1]))
-				tempNormalIndices = append(tempNormalIndices, convertToUint32(split[0]))
+				tempPositionIndices = append(tempPositionIndices, convertToUint32(split[0])-1)
+				tempUVIndices = append(tempUVIndices, convertToUint32(split[1])-1)
+				tempNormalIndices = append(tempNormalIndices, convertToUint32(split[2])-1)
 			}
 		}
 	}
@@ -118,15 +121,15 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		// only use the uv if there are textures
 		uv := gome.FloatVector2{}
 		if len(tempUVs) > 0 {
-			uv = tempUVs[tempUVIndices[i]-1].(gome.FloatVector2)
+			uv = tempUVs[tempUVIndices[i]].(gome.FloatVector2)
 		}
 
 		// check if there is a match
 		for j, vertex := range vertices {
 			if vertex.IsSimilarTo(
-				tempPositions[tempPositionIndices[i]-1].(gome.FloatVector3),
+				tempPositions[tempPositionIndices[i]].(gome.FloatVector3),
 				uv,
-				tempNormals[tempNormalIndices[i]-1].(gome.FloatVector3),
+				tempNormals[tempNormalIndices[i]].(gome.FloatVector3),
 			) {
 				// there is a similar vertex, use it instead
 				indices = append(indices, uint32(j))
@@ -139,9 +142,9 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		if !matched {
 			indices = append(indices, uint32(len(vertices)))
 			vertices = append(vertices, objVertex{
-				position: tempPositions[tempPositionIndices[i]-1].(gome.FloatVector3),
+				position: tempPositions[tempPositionIndices[i]].(gome.FloatVector3),
 				uv:       uv,
-				normal:   tempNormals[tempNormalIndices[i]-1].(gome.FloatVector3),
+				normal:   tempNormals[tempNormalIndices[i]].(gome.FloatVector3),
 			})
 		}
 	}
