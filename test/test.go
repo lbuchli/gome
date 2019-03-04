@@ -5,6 +5,7 @@ import (
 	"gitlocal/gome/common"
 	"time"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -15,8 +16,8 @@ type PolygonEntity struct {
 
 func (pe *PolygonEntity) New() error {
 	spaceComponent := &common.SpaceComponent{}
-	spaceComponent.SetPosition(gome.FloatVector3{X: 0, Y: 0, Z: -.5})
-	spaceComponent.SetSize(gome.FloatVector3{X: 2, Y: 2, Z: 2})
+	spaceComponent.SetPosition(gome.FloatVector3{X: 0, Y: 0, Z: 0})
+	spaceComponent.SetSize(gome.FloatVector3{X: 1, Y: 1, Z: 1})
 
 	pe.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
@@ -46,17 +47,16 @@ func (*ControlSystem) Name() string { return "Control" }
 
 func (cs *ControlSystem) Focus(scene *gome.Scene) {
 	cs.SingleSystem.Focus(scene)
-	currentRot := gome.FloatVector2{X: 0, Y: 0}
-	currentPos := gome.FloatVector3{X: 0, Y: 0, Z: 0}
+	currentPos := gome.FloatVector3{X: 4, Y: 3, Z: 3}
 
 	gome.MailBox.Listen("MouseScroll", func(msg gome.Message) {
 		mmsg := msg.(gome.MouseScrollMessage)
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		currentRot.X += float32(mmsg.X) / 1000000
-		currentRot.Y += float32(mmsg.Y) / 1000000
-		spaceComponent.SetRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, currentRot.X)
-		spaceComponent.SetRotation(gome.FloatVector3{X: 0, Y: 1, Z: 0}, currentRot.Y)
+		X := float32(mmsg.X) / 1000000
+		Y := float32(mmsg.Y) / 1000000
+		spaceComponent.AddRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, X)
+		spaceComponent.AddRotation(gome.FloatVector3{X: 0, Y: 1, Z: 0}, Y)
 	})
 
 	gome.MailBox.Listen("Keyboard", func(msg gome.Message) {
@@ -65,13 +65,13 @@ func (cs *ControlSystem) Focus(scene *gome.Scene) {
 		if kmsg.State == sdl.PRESSED {
 			switch kmsg.Key.Sym {
 			case sdl.K_w:
-				currentPos.Z += .0001
+				currentPos.Z += .1
 			case sdl.K_s:
-				currentPos.Z -= .0001
+				currentPos.Z -= .1
 			case sdl.K_d:
-				currentPos.X += .0001
+				currentPos.X += .1
 			case sdl.K_a:
-				currentPos.X -= .0001
+				currentPos.X -= .1
 			}
 
 			spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
@@ -100,7 +100,7 @@ func TestSpawn() {
 	win.AddScene(scene1)
 
 	pEntity := &PolygonEntity{
-		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test2.obj",
+		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test1.obj",
 	}
 
 	pEntity.New()
@@ -109,11 +109,13 @@ func TestSpawn() {
 	cameraEntity.New()
 
 	cameraEntity.Lens(
-		.5,
+		mgl32.DegToRad(120),
 		1,
 		0.1,
 		100,
 	)
+
+	cameraEntity.BaseEntity.Components["Space"].(*common.SpaceComponent).SetPosition(gome.FloatVector3{X: 4, Y: 3, Z: 3})
 
 	cameraEntity.BaseEntity.Components["Control"] = &ControlComponent{}
 

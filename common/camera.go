@@ -69,8 +69,16 @@ type CameraSystem struct {
 // viewProjectionMatrix returns the current View Projection Matrix
 func (cs *CameraSystem) projectionViewMatrix() mgl32.Mat4 {
 	if cs.SingleSystem.Active {
+		spaceComponent := cs.SingleSystem.Components[1].(*SpaceComponent)
+		position := spaceComponent.GetPosition()
+		rotation := spaceComponent.GetRotation()
+
 		projectionMatrix := cs.SingleSystem.Components[0].(*CameraComponent).projectionMatrix
-		viewMatrix := cs.SingleSystem.Components[1].(*SpaceComponent).modelMatrix()
+		viewMatrix := mgl32.LookAt(
+			position.X, position.Y, position.Z,
+			rotation.X, rotation.Y, rotation.Z,
+			0, 1, 0,
+		)
 		return projectionMatrix.Mul4(viewMatrix)
 	}
 
