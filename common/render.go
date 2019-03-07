@@ -35,6 +35,7 @@ type RenderSystem struct {
 
 	graphics.Shader
 	cameraSystem *CameraSystem
+	lightSystem  *LightSystem
 }
 
 func (*RenderSystem) RequiredComponents() []string { return []string{"Render", "Space"} }
@@ -93,6 +94,14 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 		cameraEntity.New()
 		scene.AddEntity(cameraEntity)
 	}
+
+	// add a LightSystem if there isn't one
+	if scene.HasSystem("Light") {
+		rs.lightSystem = scene.GetSystem("Light").(*LightSystem)
+	} else {
+		rs.lightSystem = &LightSystem{}
+		scene.AddSystem(rs.lightSystem)
+	}
 }
 
 func (rs *RenderSystem) Add(id uint, components []gome.Component) {
@@ -118,6 +127,8 @@ func (rs *RenderSystem) Update(delta time.Duration) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // apply clear color
 
 	gl.UseProgram(rs.Shader.Program)
+
+	lightSources := rs.lightSystem.getLightSources()
 
 	// Projection View Matrix
 	PVM := rs.cameraSystem.projectionViewMatrix()
