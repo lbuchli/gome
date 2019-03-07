@@ -1,8 +1,6 @@
 package graphics
 
 import (
-	"gitlocal/gome"
-
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
@@ -88,7 +86,7 @@ type VertexArray struct {
 	vertices int
 	vao      uint32
 	ibo      uint32
-	vbos     []uint32
+	vbo      uint32
 }
 
 // SetLayout sets the vertex layout, but only once.
@@ -98,9 +96,6 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 	}
 
 	va.layout = layout
-
-	// make as many vbos as there are vertex array pointer attributes
-	va.vbos = make([]uint32, len(layout.layout))
 
 	// generate and bind the vertex array
 	gl.GenVertexArrays(1, &va.vao) // generates the vertex array (or multiple)
@@ -112,18 +107,16 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 
 	// calculate vertex stride
 	stride := 0
-	for i, elem := range va.layout.layout {
+	for _, elem := range va.layout.layout {
 		stride += elem.getByteSize()
 
-		// Vertex Buffer Object
-		var VBO uint32
-		gl.GenBuffers(1, &VBO) // generates the buffer (or multiple)
-		va.vbos[i] = VBO       // save the vbo
 	}
 
+	// Vertex Buffer Object
+	gl.GenBuffers(1, &va.vbo) // generates the buffer (or multiple)
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbo)
+
 	for i, elem := range va.layout.layout {
-		// bind the respective vbo
-		gl.BindBuffer(gl.ARRAY_BUFFER, va.vbos[i])
 
 		// define an array of generic vertex attribute data
 		// index, size, type, normalized, stride of vertex (in bytes), pointer (offset)
@@ -137,21 +130,14 @@ func (va *VertexArray) SetLayout(layout VertexLayout) {
 }
 
 // SetData sets the buffer data at a specific index to be equal to the slice of data.
-func (va *VertexArray) SetData(index int, data []gome.FloatVector) (err error) {
-	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbos[index]) // tells OpenGL what kind of buffer this is
-
-	// change data to raw floats
-	// TODO consider using opengl vectors
-	raw := []float32{}
-	for _, vec := range data {
-		raw = append(raw, vec.ToArray()...)
-	}
+func (va *VertexArray) SetData(data []float32) (err error) {
+	gl.BindBuffer(gl.ARRAY_BUFFER, va.vbo) // tells OpenGL what kind of buffer this is
 
 	// BufferData assigns data to the buffer.
 	// there can only be one ARRAY_BUFFER bound at any time, so OpenGL knows which buffer we mean if we
 	// tell it what type of buffer it is.
 	//			  type			   size (in bytes)   pointer to data	usage
-	gl.BufferData(gl.ARRAY_BUFFER, len(raw)*4, gl.Ptr(raw), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(data)*4, gl.Ptr(data), gl.STATIC_DRAW)
 
 	return
 }

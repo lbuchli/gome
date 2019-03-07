@@ -47,14 +47,14 @@ func (*ControlSystem) Name() string { return "Control" }
 
 func (cs *ControlSystem) Focus(scene *gome.Scene) {
 	cs.SingleSystem.Focus(scene)
-	currentPos := gome.FloatVector3{X: 4, Y: 3, Z: 3}
+	currentPos := gome.FloatVector3{X: 0, Y: 0, Z: 0}
 
 	gome.MailBox.Listen("MouseScroll", func(msg gome.Message) {
 		mmsg := msg.(gome.MouseScrollMessage)
 		spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
 
-		X := float32(mmsg.X) / 1000000
-		Y := float32(mmsg.Y) / 1000000
+		Y := float32(mmsg.X) / 100
+		X := float32(mmsg.Y) / 100
 		spaceComponent.AddRotation(gome.FloatVector3{X: 1, Y: 0, Z: 0}, X)
 		spaceComponent.AddRotation(gome.FloatVector3{X: 0, Y: 1, Z: 0}, Y)
 	})
@@ -65,13 +65,13 @@ func (cs *ControlSystem) Focus(scene *gome.Scene) {
 		if kmsg.State == sdl.PRESSED {
 			switch kmsg.Key.Sym {
 			case sdl.K_w:
-				currentPos.Z += .1
-			case sdl.K_s:
-				currentPos.Z -= .1
-			case sdl.K_d:
-				currentPos.X += .1
-			case sdl.K_a:
 				currentPos.X -= .1
+			case sdl.K_s:
+				currentPos.X += .1
+			case sdl.K_d:
+				currentPos.Z -= .1
+			case sdl.K_a:
+				currentPos.Z += .1
 			}
 
 			spaceComponent := cs.SingleSystem.Components[1].(*common.SpaceComponent)
@@ -87,7 +87,7 @@ func TestSpawn() {
 		Args: gome.WindowArguments{
 			X:      0,
 			Y:      0,
-			Width:  1920,
+			Width:  1080,
 			Height: 1080,
 			Title:  "TEST",
 			Debug:  true,
@@ -100,7 +100,7 @@ func TestSpawn() {
 	win.AddScene(scene1)
 
 	pEntity := &PolygonEntity{
-		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test1.obj",
+		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test3.obj",
 	}
 
 	pEntity.New()
@@ -117,7 +117,7 @@ func TestSpawn() {
 
 	cameraEntity.BaseEntity.Components["Space"].(*common.SpaceComponent).SetPosition(gome.FloatVector3{X: 4, Y: 3, Z: 3})
 
-	cameraEntity.BaseEntity.Components["Control"] = &ControlComponent{}
+	pEntity.BaseEntity.Components["Control"] = &ControlComponent{}
 
 	scene1.AddEntities(
 		pEntity,

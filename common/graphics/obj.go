@@ -8,15 +8,7 @@ import (
 	"strings"
 )
 
-var OBJ_VERTEX_LAYOUT = VertexLayout{layout: []ElementType{VEC3, VEC2, VEC3}}
-
-// A VertexObject contains all data needed by a renderer to draw a single object.
-type VertexObject struct {
-	Indices            []uint
-	Vertices           []float32
-	TextureCoordinates []float32
-	Normals            []float32
-}
+var OBJ_VERTEX_LAYOUT = VertexLayout{layout: []ElementType{FVEC3, FVEC2, FVEC3}}
 
 // A OBJFileReader reads a .obj file.
 type OBJFileReader struct{}
@@ -149,22 +141,20 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 		}
 	}
 
-	vertexcount := len(vertices)
-	positions := make([]gome.FloatVector, vertexcount)
-	uvs := make([]gome.FloatVector, vertexcount)
-	normals := make([]gome.FloatVector, vertexcount)
+	rawData := []float32{}
 
-	for i, vertex := range vertices {
-		positions[i] = vertex.position
-		uvs[i] = vertex.uv
-		normals[i] = vertex.normal
+	// convert vertex data to a raw float32 array
+	for _, vertex := range vertices {
+		rawData = append(rawData,
+			vertex.position.X, vertex.position.Y, vertex.position.Z,
+			vertex.uv.X, vertex.uv.Y,
+			vertex.normal.X, vertex.normal.Y, vertex.normal.Z,
+		)
 	}
 
 	// set vertex data
 	data.SetLayout(OBJ_VERTEX_LAYOUT)
-	data.SetData(0, positions)
-	data.SetData(1, uvs)
-	data.SetData(2, normals)
+	data.SetData(rawData)
 	data.SetIndexData(indices)
 
 	return
