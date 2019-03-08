@@ -6,9 +6,17 @@ import "gitlocal/gome"
 	LightComponent
 */
 
+type LightType uint32
+
+const (
+	POINT_LIGHT = iota
+	DIRECTIONAL_LIGHT
+)
+
 type LightComponent struct {
-	Strength float32
-	Color    gome.FloatVector3
+	Color       gome.FloatVector3
+	Attenuation float32
+	Type        LightType
 }
 
 func (lc *LightComponent) Name() string { return "Light" }
@@ -17,10 +25,12 @@ func (lc *LightComponent) Name() string { return "Light" }
 	LightSystem
 */
 
-type lightSource struct {
-	Position gome.FloatVector3
-	Strength float32
-	Color    gome.FloatVector3
+type LightSource struct {
+	Type        LightType
+	Position    gome.FloatVector3
+	Direction   gome.FloatVector3
+	Color       gome.FloatVector3
+	Attenuation float32
 }
 
 type LightSystem struct {
@@ -29,17 +39,19 @@ type LightSystem struct {
 
 // getLightSources returns all the registered light sources:
 // their poition, strength and color
-func (ls *LightSystem) getLightSources() []lightSource {
-	sources := make([]lightSource, len(ls.MultiSystem.Entities))
+func (ls *LightSystem) getLightSources() []LightSource {
+	sources := make([]LightSource, len(ls.MultiSystem.Entities))
 	index := 0 // cant use the range index, because the for iterates over a map
 	for _, components := range ls.MultiSystem.Entities {
 		lightComponent := components[0].(*LightComponent)
 		spaceComponent := components[1].(*SpaceComponent)
 
-		sources[index] = lightSource{
-			Position: spaceComponent.GetPosition(),
-			Strength: lightComponent.Strength,
-			Color:    lightComponent.Color,
+		sources[index] = LightSource{
+			Type:        lightComponent.Type,
+			Position:    spaceComponent.GetPosition(),
+			Direction:   spaceComponent.GetRotation(),
+			Attenuation: lightComponent.Attenuation,
+			Color:       lightComponent.Color,
 		}
 
 		index++

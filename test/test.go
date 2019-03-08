@@ -3,6 +3,7 @@ package main
 import (
 	"gitlocal/gome"
 	"gitlocal/gome/common"
+	"path/filepath"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -99,8 +100,9 @@ func TestSpawn() {
 	scene1 := &gome.Scene{}
 	win.AddScene(scene1)
 
+	path, _ := filepath.Abs("../testfiles/test1.obj")
 	pEntity := &PolygonEntity{
-		Path: "/home/lukas/go/src/gitlocal/gome/testfiles/test3.obj",
+		Path: path,
 	}
 
 	pEntity.New()

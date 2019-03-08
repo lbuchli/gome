@@ -5,6 +5,7 @@ import (
 	"gitlocal/gome"
 	"gitlocal/gome/common/graphics"
 	"os"
+	"path/filepath"
 	"time"
 	"unsafe"
 
@@ -18,9 +19,11 @@ import (
 // A RenderComponent is a component used to render a texture of its
 // entity
 type RenderComponent struct {
-	array        graphics.VertexArray
 	OBJPath      string
 	ModelUpdated bool
+
+	array   graphics.VertexArray
+	texture uint32
 }
 
 func (rc *RenderComponent) Name() string { return "Render" }
@@ -80,7 +83,8 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	}
 
 	// init shader
-	rs.Shader.Init("/home/lukas/go/src/gitlocal/gome/common/graphics/default.shader")
+	path, _ := filepath.Abs("./graphics/default.shader")
+	rs.Shader.Init(path)
 
 	// get the camera system, and if there isn't one, add a new instance to the scene.
 	if scene.HasSystem("Camera") {
@@ -115,12 +119,13 @@ func (rs *RenderSystem) Add(id uint, components []gome.Component) {
 	}
 
 	reader := &graphics.OBJFileReader{}
-	va, err := reader.Data(f)
+	va, texture, err := reader.Data(f)
 	if err != nil {
 		gome.Throw(err, "Could not read data from object file")
 	}
 
 	renderComponent.array = va
+	renderComponent.texture = texture
 }
 
 func (rs *RenderSystem) Update(delta time.Duration) {
@@ -128,7 +133,9 @@ func (rs *RenderSystem) Update(delta time.Duration) {
 
 	gl.UseProgram(rs.Shader.Program)
 
-	lightSources := rs.lightSystem.getLightSources()
+	// set the light uniforms
+	//lightSources := rs.lightSystem.getLightSources()
+	//rs.Shader.SetUniformBlock("u_Lights", lightSources, 12*4*4)
 
 	// Projection View Matrix
 	PVM := rs.cameraSystem.projectionViewMatrix()
@@ -140,6 +147,8 @@ func (rs *RenderSystem) Update(delta time.Duration) {
 
 		MVP := PVM.Mul4(spaceComponent.modelMatrix())
 		rs.Shader.SetUniformFMat4("u_MVP", MVP)
+
+		gl.BindTexture(gl.TEXTURE_2D, renderComponent.texture)
 
 		VAO.Draw()
 	}

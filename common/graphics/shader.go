@@ -14,14 +14,22 @@ import (
 )
 
 type Shader struct {
-	filePath    string
-	Program     uint32
+	Program uint32
+
+	// uniform locations
 	uniformLocs map[string]int32
+	// unform block indices
+	uniformBIndices map[string]uint32
+
+	// uniform buffer objects
+	uniformBOs map[string]uint32
 }
 
 // init initializes the shader and compiles the source
 func (s *Shader) Init(shaderPath string) (err error) {
 	s.uniformLocs = make(map[string]int32)
+	s.uniformBIndices = make(map[string]uint32)
+	s.uniformBOs = make(map[string]uint32)
 	shaders := []uint32{}
 
 	f, err := os.Open(shaderPath)
@@ -153,7 +161,21 @@ func (s *Shader) getUniformLocation(name string) (location int32) {
 	}
 
 	s.uniformLocs[name] = location
-	return location
+	return
+}
+
+// getUniformLocation gets the location of a uniform in the shader.
+// May return -1 if the uniform is not found.
+func (s *Shader) getUniformBlockLocation(name string) (index uint32) {
+	// if we already saved the location, return it
+	if index, ok := s.uniformBIndices[name]; ok {
+		return index
+	}
+
+	// if it's not in our index cache, get it from opengl and save it in the cache
+	index = gl.GetUniformBlockIndex(s.Program, gl.Str(name+"\x00"))
+	s.uniformBIndices[name] = index
+	return
 }
 
 // Sets a uniform value.
@@ -210,4 +232,21 @@ func (s *Shader) SetUniformFMat4(name string, value mgl32.Mat4) {
 	if loc != -1 {
 		gl.UniformMatrix4fv(loc, 1, false, &value[0])
 	}
+}
+
+// SetUniformBlock sets the data of an active named uniform block.
+func (s *Shader) SetUniformBlock(name string, value interface{}, size int) {
+	// check if the uniform buffer object already exists
+	ubo, ok := s.uniformBOs[name]
+	if !ok {
+		// if not, generate one
+		gl.GenBuffers(1, &ubo)
+		s.uniformBOs[name] = ubo
+	}
+
+	gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
+
+	// set the new data
+	gl.BufferData(gl.UNIFORM_BUFFER, size, nil, gl.DYNAMIC_DRAW)
+	gl.BindBufferBase(gl.UNIFORM_BUFFER, s.getUniformBlockLocation(name), ubo)
 }
