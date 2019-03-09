@@ -85,6 +85,8 @@ func (ms *MultiSystem) Init(scene *Scene) {
 
 func (ms *MultiSystem) Focus(scene *Scene) {}
 
+func (ms *MultiSystem) Update(delta time.Duration) {}
+
 // A SingleSystem is a base system that can only hold one entity.
 // Use case would be a scrolling background for example.
 type SingleSystem struct {
@@ -123,3 +125,5 @@ func (ss *SingleSystem) Init(scene *Scene) {
 }
 
 func (ss *SingleSystem) Focus(scene *Scene) {}
+
+func (ss *SingleSystem) Update(delta time.Duration) {}
