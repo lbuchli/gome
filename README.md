@@ -3,6 +3,9 @@
 
 Gome is a simple 3D game engine following the ECS (Entity-Component-System) approach
 to game engines. Gome was mostly designed for learning purposes and is not in a usable state yet.
+It can currently read basic .obj files, render, move, rotate, resize and texture them in form of entities.
+You can create your own Entities, Components and Systems to expand upon the ones already given by the
+_gome/common_ package.
 
 ## TODO
 Things not yet implemented include:
@@ -17,10 +20,12 @@ Things not yet implemented include:
 
 ## Installation
 If for some reason you would want to install this hacky project, you can do it like this:
+
 `go get -u github.com/phoenixdevelops/gome`
 
 ## Hello World
-"Simple" HelloWorld: (Save your own texture under texture.jpg)
+"Simple" HelloWorld: (Spinning textured cube, save your own texture under texture.jpg)
+
 **game.go**
 ```go
 package main
