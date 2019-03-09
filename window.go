@@ -178,7 +178,7 @@ func (win *Window) runCurrentScene() {
 
 		// calculate time since last frame
 		delta := time.Since(last)
-		last.Add(delta)
+		last = time.Now()
 
 		// update scene (systems)
 		win.scenes[win.current].Update(delta)

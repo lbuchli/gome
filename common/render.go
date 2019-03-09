@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"gitlocal/gome"
 	"gitlocal/gome/common/graphics"
+	"go/build"
 	"os"
-	"path/filepath"
 	"time"
 	"unsafe"
 
@@ -83,8 +83,12 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 	}
 
 	// init shader
-	path, _ := filepath.Abs("./graphics/default.shader")
-	rs.Shader.Init(path)
+	// TODO change this hacky code
+	shaderFile, err := os.Open(build.Default.GOPATH + "/src/github.com/phoenixdevelops/gome/common/graphics/default.shader")
+	if err != nil {
+		panic("Could not find shader file")
+	}
+	rs.Shader.Init(shaderFile)
 
 	// get the camera system, and if there isn't one, add a new instance to the scene.
 	if scene.HasSystem("Camera") {

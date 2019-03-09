@@ -4,7 +4,8 @@
 Gome is a simple 3D game engine following the ECS (Entity-Component-System) approach
 to game engines. Gome was mostly designed for learning purposes and is not in a usable state yet.
 
-(TODO) Things not yet implemented include:
+## TODO
+Things not yet implemented include:
  - Animations
  - Light Sources
  - Particles
@@ -12,11 +13,23 @@ to game engines. Gome was mostly designed for learning purposes and is not in a 
  - Text Rendering
  - Flexible .OBJ file reading
  - Common physics system
+ - Asset Management
 
-Simple HelloWorld:
+## Installation
+If for some reason you would want to install this hacky project, you can do it like this:
+`go get -u github.com/phoenixdevelops/gome`
+
+## Hello World
+"Simple" HelloWorld: (Save your own texture under texture.jpg)
 **game.go**
 ```go
 package main
+
+import (
+	"github.com/phoenixdevelops/gome"
+	"github.com/phoenixdevelops/gome/common"
+	"time"
+)
 
 /*
 	Entity
@@ -24,16 +37,20 @@ package main
 
 type CubeEntity struct {
 	gome.BaseEntity
-	Path string
+	Path     string
+	Position gome.FloatVector3
 }
 
 // New fills the entity with initial data.
 func (ce *CubeEntity) New() error {
-	pe.BaseEntity.Components = map[string]gome.Component{
+	spaceComponent := &common.SpaceComponent{}
+	spaceComponent.SetPosition(ce.Position)
+
+	ce.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
-			OBJPath: pe.Path,
+			OBJPath: ce.Path,
 		},
-		"Space": &common.SpaceComponent{},
+		"Space": spaceComponent,
 	}
 
 	return nil
@@ -51,15 +68,16 @@ type RotationSystem struct {
 
 // The RotationSystem requires a the SpaceComponent, because it sets the rotation there.
 // The RenderComponent is required because else we would also rotate the camera.
-func (rs *RotationSystem) RequiredComponents() []string{} { return []string{"Space", "Render"} }
+func (rs *RotationSystem) RequiredComponents() []string { return []string{"Space", "Render"} }
 
 func (rs *RotationSystem) Name() string { return "Rotation" }
 
+// Update gets called every frame.
 func (rs *RotationSystem) Update(delta time.Duration) {
-	rotation := delta.Seconds() * 2
-	
+	rotation := float32(delta.Seconds())
+
 	// iterate through the systems entities
-	for _, components := rs.MultiSystem.Entities {
+	for _, components := range rs.MultiSystem.Entities {
 		// the component order is always the same we gave in RequiredComponents
 		spaceComponent := components[0].(*common.SpaceComponent)
 
@@ -82,7 +100,7 @@ func main() {
 			Height: 1080,
 			Title:  "Hello World",
 			Debug:  false,
-		}
+		},
 	}
 
 	// ... and initialize it
@@ -99,21 +117,33 @@ func main() {
 	}
 	entity.New()
 
-	// add the entity to the scene
-	scene.AddEntity(entity)
+	// make a new camera
+	camera := &common.CameraEntity{}
+	camera.New()
+	// set the position of the camera
+	camera.Components["Space"].(*common.SpaceComponent).SetPosition(gome.FloatVector3{4, 3, 3})
+
+	// add the entities to the scene
+	scene.AddEntities(
+		entity,
+		camera,
+	)
 
 	// add some required systems to the scene
 	scene.AddSystems(
 		&common.RenderSystem{}, // renders the cube entity
-		&RotationSystem{}, // our system that rotates every visible entity
+		&common.CameraSystem{}, // perspective
+		&RotationSystem{},      // our system that rotates every visible entity
 	)
-}
 
+	// start the window
+	win.Spawn()
+}
 ```
 
 **cube.obj**
 ```
-usemtl texture.png
+usemtl texture.jpg
 v 1.000000 -1.000000 -1.000000
 v 1.000000 -1.000000 1.000000
 v -1.000000 -1.000000 1.000000
@@ -157,6 +187,3 @@ f 8/11/7 7/12/7 6/10/7
 f 1/2/8 2/9/8 3/13/8
 f 1/2/8 3/13/8 4/14/8
 ```
-
-**texture.png**
-<img src="" alt="Texture PNG"></img>

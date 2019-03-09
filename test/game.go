@@ -12,16 +12,20 @@ import (
 
 type CubeEntity struct {
 	gome.BaseEntity
-	Path string
+	Path     string
+	Position gome.FloatVector3
 }
 
 // New fills the entity with initial data.
 func (ce *CubeEntity) New() error {
+	spaceComponent := &common.SpaceComponent{}
+	spaceComponent.SetPosition(ce.Position)
+
 	ce.BaseEntity.Components = map[string]gome.Component{
 		"Render": &common.RenderComponent{
 			OBJPath: ce.Path,
 		},
-		"Space": &common.SpaceComponent{},
+		"Space": spaceComponent,
 	}
 
 	return nil
@@ -43,8 +47,9 @@ func (rs *RotationSystem) RequiredComponents() []string { return []string{"Space
 
 func (rs *RotationSystem) Name() string { return "Rotation" }
 
+// Update gets called every frame.
 func (rs *RotationSystem) Update(delta time.Duration) {
-	rotation := float32(delta.Seconds() * 2)
+	rotation := float32(delta.Seconds())
 
 	// iterate through the systems entities
 	for _, components := range rs.MultiSystem.Entities {
@@ -87,12 +92,22 @@ func main() {
 	}
 	entity.New()
 
-	// add the entity to the scene
-	scene.AddEntity(entity)
+	// make a new camera
+	camera := &common.CameraEntity{}
+	camera.New()
+	// set the position of the camera
+	camera.Components["Space"].(*common.SpaceComponent).SetPosition(gome.FloatVector3{4, 3, 3})
+
+	// add the entities to the scene
+	scene.AddEntities(
+		entity,
+		camera,
+	)
 
 	// add some required systems to the scene
 	scene.AddSystems(
 		&common.RenderSystem{}, // renders the cube entity
+		&common.CameraSystem{}, // perspective
 		&RotationSystem{},      // our system that rotates every visible entity
 	)
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gitlocal/gome"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -26,18 +25,13 @@ type Shader struct {
 }
 
 // init initializes the shader and compiles the source
-func (s *Shader) Init(shaderPath string) (err error) {
+func (s *Shader) Init(shader io.Reader) (err error) {
 	s.uniformLocs = make(map[string]int32)
 	s.uniformBIndices = make(map[string]uint32)
 	s.uniformBOs = make(map[string]uint32)
 	shaders := []uint32{}
 
-	f, err := os.Open(shaderPath)
-	if err != nil {
-		return
-	}
-
-	reader := bufio.NewReader(f)
+	reader := bufio.NewReader(shader)
 
 	shaderTypeLine, err := reader.ReadString('\n')
 	if err != nil {

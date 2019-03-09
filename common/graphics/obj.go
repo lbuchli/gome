@@ -6,6 +6,7 @@ import (
 	"gitlocal/gome"
 	"image"
 	"image/draw"
+	_ "image/jpeg"
 	_ "image/png"
 	"io"
 	"os"
