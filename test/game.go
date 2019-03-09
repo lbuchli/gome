@@ -95,4 +95,7 @@ func main() {
 		&common.RenderSystem{}, // renders the cube entity
 		&RotationSystem{},      // our system that rotates every visible entity
 	)
+
+	// start the window
+	win.Spawn()
 }

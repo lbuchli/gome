@@ -2,10 +2,17 @@ package graphics
 
 import (
 	"bufio"
+	"fmt"
 	"gitlocal/gome"
+	"image"
+	"image/draw"
+	_ "image/png"
 	"io"
+	"os"
 	"strconv"
 	"strings"
+
+	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
 var OBJ_VERTEX_LAYOUT = VertexLayout{layout: []ElementType{FVEC3, FVEC2, FVEC3}}
@@ -37,7 +44,7 @@ func (ofr *OBJFileReader) Check(file io.Reader) bool {
 func (ofr *OBJFileReader) Extension() string { return "obj" }
 
 // Data returns the data of the whole file in a more readable format.
-func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
+func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, texture uint32, err error) {
 
 	reader := bufio.NewReader(file)
 
@@ -49,6 +56,8 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 	tempUVs := []gome.FloatVector{}
 	tempNormals := []gome.FloatVector{}
 
+	material := ""
+
 	for {
 		// read the file line by line
 		line, err := reader.ReadString('\n')
@@ -58,7 +67,7 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 				break
 			}
 
-			return data, err
+			return data, texture, err
 		}
 
 		// clip the newline char from the line
@@ -89,6 +98,8 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 			})
 		case "s":
 			continue // TODO
+		case "usemtl": // texture / material
+			material = words[1] // TODO this will bug out when file name contains a space
 		case "f": // indices
 			// for every word except the first one
 			for _, word := range words[1:] {
@@ -157,6 +168,16 @@ func (ofr *OBJFileReader) Data(file io.Reader) (data VertexArray, err error) {
 	data.SetData(rawData)
 	data.SetIndexData(indices)
 
+	// if the material was set, set the texture
+	if len(material) > 0 {
+		texture, err = newTexture(material)
+		if err != nil {
+			return data, texture, err
+		}
+	} else {
+		texture = 0
+	}
+
 	return
 }
 
@@ -176,4 +197,44 @@ func convertToUint32(input string) uint32 {
 		return 0
 	}
 	return uint32(result)
+}
+
+// newTexture generates a new OpenGL texture from a file.
+// Source: https://gist.github.com/errcw/e3311a0ed1a1c0113a92
+func newTexture(file string) (uint32, error) {
+	imgFile, err := os.Open(file)
+	if err != nil {
+		return 0, err
+	}
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		return 0, err
+	}
+
+	rgba := image.NewRGBA(img.Bounds())
+	if rgba.Stride != rgba.Rect.Size().X*4 {
+		return 0, fmt.Errorf("unsupported stride")
+	}
+	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		int32(rgba.Rect.Size().X),
+		int32(rgba.Rect.Size().Y),
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		gl.Ptr(rgba.Pix))
+
+	return texture, nil
 }
