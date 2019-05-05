@@ -17,7 +17,7 @@ Things not yet implemented include:
 
 ## Installation
 If for some reason you would want to install this hacky project, you can do it like this:
-`go get -u github.com/phoenixdevelops/gome`
+`go get -u github.com/lbuchli/gome`
 
 ## Hello World
 "Simple" HelloWorld: (Save your own texture under texture.jpg)
@@ -26,8 +26,8 @@ If for some reason you would want to install this hacky project, you can do it l
 package main
 
 import (
-	"github.com/phoenixdevelops/gome"
-	"github.com/phoenixdevelops/gome/common"
+	"github.com/lbuchli/gome"
+	"github.com/lbuchli/gome/common"
 	"time"
 )
 

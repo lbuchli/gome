@@ -88,7 +88,7 @@ func main() {
 
 	// make a new entity
 	entity := &CubeEntity{
-		Path: "cube.obj",
+		Path: "/home/lukas/Downloads/Linux.obj",
 	}
 	entity.New()
 

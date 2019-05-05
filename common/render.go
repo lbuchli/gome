@@ -84,7 +84,7 @@ func (rs *RenderSystem) Init(scene *gome.Scene) {
 
 	// init shader
 	// TODO change this hacky code
-	shaderFile, err := os.Open(build.Default.GOPATH + "/src/github.com/phoenixdevelops/gome/common/graphics/default.shader")
+	shaderFile, err := os.Open(build.Default.GOPATH + "/src/github.com/lbuchli/gome/common/graphics/default.shader")
 	if err != nil {
 		panic("Could not find shader file")
 	}
@@ -119,7 +119,7 @@ func (rs *RenderSystem) Add(id uint, components []gome.Component) {
 
 	f, err := os.Open(renderComponent.OBJPath)
 	if err != nil {
-		gome.Throw(err, "Could not open OBJ file")
+		gome.Throw(err, "Could not open OBJ file "+renderComponent.OBJPath)
 	}
 
 	reader := &graphics.OBJFileReader{}
